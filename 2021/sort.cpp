@@ -1,6 +1,7 @@
 #include "myutility.hpp"
 #include <vector>
-#include <iterator>
+#include <algorithm>
+//#include <execution>
 
 struct param{
 	static const int agentN = 10; 		// number of agents
@@ -10,17 +11,20 @@ struct param{
 
 
 std::vector<int> generateLocationPtrs(int locN, const std::vector<std::pair<int,int>>& agents_location){
-	std::vector<int> locationPtrs(locN+1);
-	locationPtrs[0] = 0;
-	std::vector<int> cardinalityOfLocations(param::locN);
-	#pragma omp parallel for
-	for(int i = 0; i < param::locN; i++){
-		cardinalityOfLocations[i] = std::count_if(agents_location.begin(), agents_location.end(), [i](std::pair<int,int> p){ return p.second == i; });
-	}
-	#pragma omp parallel for
-	for(int i = 0; i < param::locN; i++){
-		locationPtrs[i+1] = std::accumulate(cardinalityOfLocations.begin(), cardinalityOfLocations.begin()+i+1, 0);
-	}
+	std::vector<int> locationPtrs(locN+1, 0);
+	std::for_each(
+		/*std::execution::par,*/
+		agents_location.begin(),
+		agents_location.end(),
+		[&locationPtrs](std::pair<int,int> p){ 
+			std::for_each(
+				/*std::execution::par,*/    // itt már lehet hogy nagyobb lesz az overhead ha nincs nagyon sok location
+				locationPtrs.begin()+p.second+1,
+				locationPtrs.end(),
+				[](int &locPtr){ locPtr++; }
+			);
+		}
+	);
 	return locationPtrs;
 }
 
