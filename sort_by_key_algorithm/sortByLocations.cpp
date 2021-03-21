@@ -28,7 +28,7 @@ nvc++ -I/home/shared/software/cuda/hpc_sdk/Linux_x86_64/20.9/compilers/include-s
 namespace param{
     const int It = 5;                       // number of measurement iteratons for statistics
     const long int agentN = 1<<20; //1<<26;     // 2^18 - fast, 2^20 ~= 1 million // number of values   (number of agents in the COVID simulator)  
-    const long int locN =  1<<20;               // number of distinct locations (number of locations in the COVID simulator)
+    const long int locN =  agentN;               // number of distinct locations (number of locations in the COVID simulator)
 }
 
 
@@ -59,9 +59,9 @@ std::vector<int> calculateLocationsPtrs(const std::vector<int>& locations){
 
 //-------------------------------------------------------- m a i n ------------------------------------------------------------------------------------------
 int main(void) { 
-    std::cout<<"arraysize: "<<param::agentN<<std::endl;
+    std::cout<<"agentN: "<<param::agentN<<std::endl;
     // Init
-    std::ofstream timesFile("times.txt");
+    std::ofstream timesFile("times_agentN-"+to_str(param::agentN)+".txt");
     std::vector<int> agents(param::agentN);
     std::vector<int> locations(param::agentN);
     std::vector<int> locationPtrs(param::locN+1);
@@ -114,7 +114,7 @@ int main(void) {
     timesFile<<"times_boost = ";
     to_file(times_boost, timesFile);
 
-    
+    /*
     std::cout<<"calculateLocationPtrs time measurement ------------------------------\n";
     std::vector<float> times_calcLocationPtrs;
     for(int i = 0; i<param::It; i++){
@@ -128,7 +128,7 @@ int main(void) {
     }
     timesFile<<"calculate_locationPtrs = ";
     to_file(times_calcLocationPtrs, timesFile);
-
+    */
 
 
     timesFile.close();

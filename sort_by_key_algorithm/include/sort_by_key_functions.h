@@ -19,7 +19,7 @@
 #include <boost/tuple/tuple.hpp>
 
 #include "pairedvectoriterator.h" // implemented by me and Kompi
-//#include "tupleit.hh"  // a boost::tuple iterator, implemented by Anthony Williams  - https://pastebin.com/LFkTHdQk  
+#include "tupleit.hh"  // a boost::tuple iterator, implemented by Anthony Williams  - https://pastebin.com/LFkTHdQk  
 
 
 float sort_by_key_STD_PAIR(std::vector<int> &inputkeys, std::vector<int> &inputdata){
@@ -90,8 +90,12 @@ float sort_by_key_PAIRED_VECTOR_ITERATOR(std::vector<int> &inputkeys, std::vecto
 
 
 float sort_by_key_BOOSTTUPLEIT(std::vector<int> &inputkeys, std::vector<int> &inputdata){
-/*
-    // icpc - on CPU - one warning
+
+    // icpc - on CPU - one warning :
+    /*include/tupleit.hh(281): warning #1478: class "std::auto_ptr<boost::tuples::cons<int, boost::tuples::cons<int, boost::tuples::null_type>>>" (declared at line 87 of "/usr/include/c++/4.8.5/backward/auto_ptr.h") was declared deprecated
+              std::auto_ptr<OwnedType> tupleBuf;
+                                       ^
+    */
     // on GPU - error
     // g++ - error in the tupleit.hh
     typedef boost::tuple<int&,int&> tup_t;
@@ -109,8 +113,7 @@ float sort_by_key_BOOSTTUPLEIT(std::vector<int> &inputkeys, std::vector<int> &in
     
     float time = std::chrono::duration_cast<std::chrono::milliseconds>(t_end-t_begin).count();
     return time;
-*/
-    return 0;
+
 }
 
 
