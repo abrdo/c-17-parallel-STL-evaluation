@@ -19,7 +19,7 @@
 #include <boost/tuple/tuple.hpp>
 
 #include "pairedvectoriterator.h" // implemented by me and Kompi
-#include "tupleit.hh"  // a boost::tuple iterator, implemented by Anthony Williams  - https://pastebin.com/LFkTHdQk  
+//#include "tupleit.hh"  // a boost::tuple iterator, implemented by Anthony Williams  - https://pastebin.com/LFkTHdQk  
 
 
 float sort_by_key_STD_PAIR(std::vector<int> &inputkeys, std::vector<int> &inputdata){
@@ -84,14 +84,16 @@ float sort_by_key_HELPER_INDICES_VECTOR(std::vector<int>& inputkeys, std::vector
 
 float sort_by_key_PAIRED_VECTOR_ITERATOR(std::vector<int> &inputkeys, std::vector<int> &inputdata){
     // todo with my paired vector iterator
-    return {0};
+    return 0;
 }
 
 
 
 float sort_by_key_BOOSTTUPLEIT(std::vector<int> &inputkeys, std::vector<int> &inputdata){
-    // it works, just one warning occures.
+/*
+    // icpc - on CPU - one warning
     // on GPU - error
+    // g++ - error in the tupleit.hh
     typedef boost::tuple<int&,int&> tup_t;
     
     auto t_begin = std::chrono::high_resolution_clock::now();
@@ -107,6 +109,8 @@ float sort_by_key_BOOSTTUPLEIT(std::vector<int> &inputkeys, std::vector<int> &in
     
     float time = std::chrono::duration_cast<std::chrono::milliseconds>(t_end-t_begin).count();
     return time;
+*/
+    return 0;
 }
 
 

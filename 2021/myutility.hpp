@@ -7,6 +7,9 @@
 #include <utility>
 #include <iterator>
 
+
+
+
 ////////////////////////////// generators: //////////////////////////////////////////////////////////////
 
 inline std::vector<int> generateVector_withRandomIntValues(int N, int lowerBound, int upperBound){
@@ -26,6 +29,7 @@ inline std::vector<std::pair<int,int>> generateVector_withIndex_RandomPairValues
 	
 	int tmpSecond;
 	std::pair<int,int> tmpPair;
+	#pragma omp parallel for
 	for(int i = 0; i < N; i++){
 		tmpSecond = distrib(gen);
 		tmpPair = std::make_pair(i, tmpSecond);

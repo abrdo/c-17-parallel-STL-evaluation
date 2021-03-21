@@ -8,7 +8,7 @@
 
 using namespace std;
 
-struct PARAM{
+struct param{
     static const int It = 5;  // number of measurement iteratons
     static const long int N = 1<<26;  // array size
     
@@ -45,11 +45,11 @@ void PRINT_vector(const std::vector<int>& inputkeys){
 
 
 int main(void) { //-------------------------------------------------------- m a i n ------------------------------------------------------------------------------------------
-    std::cout<<"arraysize: "<<PARAM::N<<std::endl;
+    std::cout<<"arraysize: "<<param::N<<std::endl;
     // Init
     ofstream data("times.txt");
-  	std::vector<int> inputdata(PARAM::N);
-  	std::vector<int> inputkeys(PARAM::N);
+  	std::vector<int> inputdata(param::N);
+  	std::vector<int> inputkeys(param::N);
    
     init_vectors(&inputkeys, &inputdata);
     std::cout<<"--------------------"<<std::endl;
@@ -62,7 +62,7 @@ int main(void) { //-------------------------------------------------------- m a 
     
     std::cout<<"std PAIR ------------------------------------------\n";
     std::vector<float> times_pair;
-    for(int i = 0; i<PARAM::It; i++){
+    for(int i = 0; i<param::It; i++){
         init_vectors(&inputkeys, &inputdata);
         float time = sort_by_key_STD_PAIR(inputkeys, inputdata);
         times_pair.push_back(time);
@@ -73,7 +73,7 @@ int main(void) { //-------------------------------------------------------- m a 
     
     std::cout<<"Helper INDICES vector -----------------------------\n";
     std::vector<float> times_indices;
-    for(int i = 0; i<PARAM::It; i++){
+    for(int i = 0; i<param::It; i++){
         init_vectors(&inputkeys, &inputdata);
         float time = sort_by_key_HELPER_INDICES_VECTOR(inputkeys, inputdata);
         times_indices.push_back(time);
@@ -88,7 +88,7 @@ int main(void) { //-------------------------------------------------------- m a 
     
     std::cout<<"BOOST-TUPLE Iterator ------------------------------\n";
     std::vector<float> times_boost;
-    for(int i = 0; i<PARAM::It; i++){
+    for(int i = 0; i<param::It; i++){
         init_vectors(&inputkeys, &inputdata);
         float time = sort_by_key_BOOSTTUPLEIT(inputkeys, inputdata);
         times_boost.push_back(time);

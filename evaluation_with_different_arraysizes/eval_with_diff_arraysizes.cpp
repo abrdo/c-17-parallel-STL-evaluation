@@ -23,7 +23,7 @@
 #include <typeinfo>
 #include <omp.h>
 using namespace std;
-/////////// Fordítás, futtatás: ///////////////////
+/////////// Fordï¿½tï¿½s, futtatï¿½s: ///////////////////
 
 // ------GPU---------
 /*
@@ -41,15 +41,15 @@ nvc++ -I/home/shared/software/cuda/hpc_sdk/Linux_x86_64/20.9/compilers/include-s
 // icpc vector_copy.cpp -std=c++11 -ltbb -qopenmp-simd -O3 -xHOST
 
 // numactl --cpunodebind=0 ./a.out      
-      //--> single processor (socket) (amúgy 2 van, ez zajosíthatja az eredményeket, ahogy a szálak a processzorok között vándorolnak)
+      //--> single processor (socket) (amï¿½gy 2 van, ez zajosï¿½thatja az eredmï¿½nyeket, ahogy a szï¿½lak a processzorok kï¿½zï¿½tt vï¿½ndorolnak)
 // ./a.out
 
 
-///////// Méretek ////////////
+///////// Mï¿½retek ////////////
 // 1 GB --- size: 268 435456
 // 1 millio ---- 3.8 MB
 
-///////// Idõk: /////////////////////
+///////// Idï¿½k: /////////////////////
 // 37p      -- transform_300-400_all-size 
 // 24p(?)   -- copy_300-400_all-size 
 // (6.5p(?) -- copy_2-101_all-size)
@@ -178,12 +178,12 @@ void write_ALL_to_file(ofstream &f, vector<int> range,    vector<double> t_seq, 
 
 
 ////////// copy / transform for one //////////////////////
-//egy vektorméretre egy adatsor
-      //- elsõ mennyire más?
-      //- mekkora a szórás
+//egy vektormï¿½retre egy adatsor
+      //- elsï¿½ mennyire mï¿½s?
+      //- mekkora a szï¿½rï¿½s
 
 template<typename ExePolicy>
-vector<double> measure_times_for_one_vectorsize(Oper oper, ExePolicy policy, vector<int> range, int repeats = Repeats /* = k_to_avg a kiatlagolasnal*/, int n = NN){ // n a vektorméret
+vector<double> measure_times_for_one_vectorsize(Oper oper, ExePolicy policy, vector<int> range, int repeats = Repeats /* = k_to_avg a kiatlagolasnal*/, int n = NN){ // n a vektormï¿½ret
     vector<double> times;
     
     vector<int>a(n,1);

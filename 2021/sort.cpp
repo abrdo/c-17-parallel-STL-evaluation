@@ -3,11 +3,30 @@
 #include <algorithm>
 //#include <execution>
 
-struct param{
+
+/////////// Ford�t�s, futtat�s: ///////////////////
+
+// ------GPU---------
+/*
+salloc -pgpu2 --nodelist=neumann srun --pty --preserve-env /bin/bash -l
+module load gpu/cuda/11.0rc
+module load nvhpc/20.9
+nvc++ -I/home/shared/software/cuda/hpc_sdk/Linux_x86_64/20.9/compilers/include-stdpar         vector_copy_gpu.cpp -std=c++11 -O3 -o gpu_test -stdpar
+./gpu_test
+*/
+      // GPU Summary:
+      //nvprof --print-gpu-summary 
+
+
+// ------CPU---------
+// icpc vector_copy.cpp -std=c++11 -ltbb -qopenmp-simd -O3 -xHOST
+
+
+namespace param{
 	static const int agentN = 10; 		// number of agents
 	static const int locN = 3; 			// number of locations
 	//static const int locChanges = 4;	// number of agents who change the location
-};
+}
 
 
 std::vector<int> generateLocationPtrs(int locN, const std::vector<std::pair<int,int>>& agents_location){
