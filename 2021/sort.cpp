@@ -13,16 +13,11 @@ struct param{
 std::vector<int> generateLocationPtrs(int locN, const std::vector<std::pair<int,int>>& agents_location){
 	std::vector<int> locationPtrs(locN+1, 0);
 	std::for_each(
-		/*std::execution::par,*/
+		/*std::execution::par,*/    // itt már lehet hogy nagyobb lesz az overhead ha nincs nagyon sok location
 		agents_location.begin(),
 		agents_location.end(),
 		[&locationPtrs](std::pair<int,int> p){ 
-			std::for_each(
-				/*std::execution::par,*/    // itt már lehet hogy nagyobb lesz az overhead ha nincs nagyon sok location
-				locationPtrs.begin()+p.second+1,
-				locationPtrs.end(),
-				[](int &locPtr){ locPtr++; }
-			);
+			std::for_each(/*std::execution::par,*/ locationPtrs.begin()+p.second+1, locationPtrs.end(), [](int &locPtr){ locPtr++; });
 		}
 	);
 	return locationPtrs;
