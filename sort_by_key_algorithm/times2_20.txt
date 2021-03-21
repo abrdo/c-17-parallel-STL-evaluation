@@ -1,0 +1,8 @@
+times_pair = [ 24, 12, 11, 12, 11]
+
+times_indices = [ 35, 36, 35, 35, 30]
+
+times_boost = [ 0, 0, 0, 0, 0]
+
+calculate_keyPtrs = [ 27065, 27029, 27128, 25752, 27235]
+

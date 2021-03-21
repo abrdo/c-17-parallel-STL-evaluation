@@ -27,49 +27,49 @@ nvc++ -I/home/shared/software/cuda/hpc_sdk/Linux_x86_64/20.9/compilers/include-s
 
 namespace param{
     const int It = 5;                       // number of measurement iteratons for statistics
-    const long int dataN = 10; //1<<26;     // number of values   (number of agents in the COVID simulator)
-    const long int keyN =  3;               // number of distinct keys (number of locations in the COVID simulator)
+    const long int agentN = 1<<20; //1<<26;     // 2^18 - fast, 2^20 ~= 1 million // number of values   (number of agents in the COVID simulator)  
+    const long int locN =  1<<20;               // number of distinct locations (number of locations in the COVID simulator)
 }
 
 
 
-void init_vectors(std::vector<int>& inputdata, std::vector<int>& inputkeys){
+void init_vectors(std::vector<int>& agents, std::vector<int>& locations){
   	std::random_device rd;
     std::mt19937 gen(rd());
   	std::normal_distribution<> distrib(500,200);
     
-  	std::generate(inputdata.begin(), inputdata.end(), [&distrib,&gen](){ return std::max(0,(int)std::round(distrib(gen))); });
-  	std::generate(inputkeys.begin(), inputkeys.end(), [&distrib,&gen](){ return gen()%param::keyN; });
+  	std::generate(agents.begin(), agents.end(), [&distrib,&gen](){ return std::max(0,(int)std::round(distrib(gen))); });
+  	std::generate(locations.begin(), locations.end(), [&distrib,&gen](){ return gen()%param::locN; });
 }
 
 
-std::vector<int> calculateKeysPtrs(const std::vector<int>& inputkeys){
-	std::vector<int> keyPtrs(param::keyN+1, 0);
+std::vector<int> calculateLocationsPtrs(const std::vector<int>& locations){
+	std::vector<int> locationPtrs(param::locN+1, 0);
 	std::for_each(
 		std::execution::par,
-		inputkeys.begin(),
-		inputkeys.end(),
-		[&keyPtrs](int key){ 
-			std::for_each(std::execution::par, keyPtrs.begin()+key+1, keyPtrs.end(), [](int &keyPtr){ keyPtr++; });
+		locations.begin(),
+		locations.end(),
+		[&locationPtrs](int loc){ 
+			std::for_each(std::execution::par, locationPtrs.begin()+loc+1, locationPtrs.end(), [](int &locPtr){ locPtr++; });
 		}
 	);
-	return keyPtrs;
+	return locationPtrs;
 }
 
 
 //-------------------------------------------------------- m a i n ------------------------------------------------------------------------------------------
 int main(void) { 
-    std::cout<<"arraysize: "<<param::dataN<<std::endl;
+    std::cout<<"arraysize: "<<param::agentN<<std::endl;
     // Init
     std::ofstream timesFile("times.txt");
-    std::vector<int> inputdata(param::dataN);
-    std::vector<int> inputkeys(param::dataN);
-    std::vector<int> keyPtrs(param::keyN+1);
+    std::vector<int> agents(param::agentN);
+    std::vector<int> locations(param::agentN);
+    std::vector<int> locationPtrs(param::locN+1);
 
-    init_vectors(inputkeys, inputdata);
+    init_vectors(locations, agents);
     std::cout<<"--------------------\n";
-    //PRINT_vector(inputkeys);
-    //PRINT_vector(inputdata);
+    //PRINT_vector(locations);
+    //PRINT_vector(agents);
     //std::cout<<"___________________"<<std::endl;
 
 
@@ -78,9 +78,9 @@ int main(void) {
     std::cout<<"std PAIR ------------------------------------------\n";
     std::vector<float> times_pair;
     for(int i = 0; i<param::It; i++){
-        init_vectors(inputkeys, inputdata);
-        keyPtrs = calculateKeysPtrs(inputkeys);
-        float time = sort_by_key_STD_PAIR(inputdata, inputkeys);
+        init_vectors(locations, agents);
+        //locationPtrs = calculateLocationsPtrs(locations);
+        float time = sort_by_key_STD_PAIR(agents, locations);
         times_pair.push_back(time);
     }
     timesFile<<"times_pair = ";
@@ -90,9 +90,9 @@ int main(void) {
     std::cout<<"Helper INDICES vector -----------------------------\n";
     std::vector<float> times_indices;
     for(int i = 0; i<param::It; i++){
-        init_vectors(inputkeys, inputdata);
-        keyPtrs = calculateKeysPtrs(inputkeys);
-        float time = sort_by_key_HELPER_INDICES_VECTOR(inputdata, inputkeys);
+        init_vectors(locations, agents);
+        //locationPtrs = calculateLocationsPtrs(locations);
+        float time = sort_by_key_HELPER_INDICES_VECTOR(agents, locations);
         times_indices.push_back(time);
     }
     timesFile<<"times_indices = ";
@@ -106,28 +106,28 @@ int main(void) {
     std::cout<<"BOOST-TUPLE Iterator ------------------------------\n";
     std::vector<float> times_boost;
     for(int i = 0; i<param::It; i++){
-        init_vectors(inputkeys, inputdata);
-        keyPtrs = calculateKeysPtrs(inputkeys);
-        float time = sort_by_key_BOOSTTUPLEIT(inputdata, inputkeys);
+        init_vectors(locations, agents);
+        //locationPtrs = calculateLocationsPtrs(locations);
+        float time = sort_by_key_BOOSTTUPLEIT(agents, locations);
         times_boost.push_back(time);
     }
     timesFile<<"times_boost = ";
     to_file(times_boost, timesFile);
 
     
-
-    std::cout<<"calculateKeyPtrs time measurement ------------------------------\n";
-    std::vector<float> times_calcKeyPtrs;
-    for(int i = 0; i<10; i++){
-        init_vectors(inputkeys, inputdata);
+    std::cout<<"calculateLocationPtrs time measurement ------------------------------\n";
+    std::vector<float> times_calcLocationPtrs;
+    for(int i = 0; i<param::It; i++){
+        std::cout<<i<<"\n";
+        init_vectors(locations, agents);
         auto t1 = std::chrono::high_resolution_clock::now();
-        keyPtrs = calculateKeysPtrs(inputkeys);
+        locationPtrs = calculateLocationsPtrs(locations);
         auto t2 = std::chrono::high_resolution_clock::now();
         int time = std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count();
-        times_calcKeyPtrs.push_back(time);
+        times_calcLocationPtrs.push_back(time);
     }
-    timesFile<<"calculate keyPtrs = ";
-    to_file(times_calcKeyPtrs, timesFile);
+    timesFile<<"calculate_locationPtrs = ";
+    to_file(times_calcLocationPtrs, timesFile);
 
 
 

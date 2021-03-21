@@ -1,6 +1,8 @@
-times_pair = [ 712, 674, 694, 674, 790]
+times_pair = [ 32, 13, 11, 11, 11]
 
-times_indices = [ 3048, 3408, 3742, 3170, 3633]
+times_indices = [ 36, 36, 37, 35, 31]
 
 times_boost = [ 0, 0, 0, 0, 0]
+
+calculate_locationPtrs = [ 27220, 27378, 27040, 25501, 28077]
 
