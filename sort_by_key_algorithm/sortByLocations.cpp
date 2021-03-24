@@ -1,11 +1,13 @@
 //#include "include/statistics.h"
 #include "include/printers.h"
-#include "include/sort_by_key_functions.h"
+#include "include/sorting.h"
 
 #include <iostream>
 #include <vector>
 #include <random>
 #include <fstream>
+
+using namespace sort;
 
 /////////// Ford�t�s, futtat�s: ///////////////////
 
@@ -25,13 +27,12 @@ nvc++ -I/home/shared/software/cuda/hpc_sdk/Linux_x86_64/20.9/compilers/include-s
 // icpc vector_copy.cpp -std=c++11 -ltbb -qopenmp-simd -O3 -xHOST
 
 
+
 namespace param{
     const int It = 5;                       // number of measurement iteratons for statistics
     const long int agentN = 1<<20; //1<<26;     // 2^18 - fast, 2^20 ~= 1 million // number of values   (number of agents in the COVID simulator)  
     const long int locN =  agentN;               // number of distinct locations (number of locations in the COVID simulator)
 }
-
-
 
 void init_vectors(std::vector<int>& agents, std::vector<int>& locations){
   	std::random_device rd;
@@ -43,20 +44,6 @@ void init_vectors(std::vector<int>& agents, std::vector<int>& locations){
 }
 
 
-std::vector<int> calculateLocationsPtrs(const std::vector<int>& locations){
-	std::vector<int> locationPtrs(param::locN+1, 0);
-	std::for_each(
-		std::execution::par,
-		locations.begin(),
-		locations.end(),
-		[&locationPtrs](int loc){ 
-			std::for_each(std::execution::par, locationPtrs.begin()+loc+1, locationPtrs.end(), [](int &locPtr){ locPtr++; });
-		}
-	);
-	return locationPtrs;
-}
-
-
 //-------------------------------------------------------- m a i n ------------------------------------------------------------------------------------------
 int main(void) { 
     std::cout<<"agentN: "<<param::agentN<<std::endl;
@@ -64,7 +51,8 @@ int main(void) {
     std::ofstream timesFile("times_agentN-"+to_str(param::agentN)+".txt");
     std::vector<int> agents(param::agentN);
     std::vector<int> locations(param::agentN);
-    std::vector<int> locationPtrs(param::locN+1);
+    std::vector<int> locationPtrs(param::locN+1);                 // v2
+    std::vector<std::vector<int>> agentsAtLocations(param::locN); // v1
 
     init_vectors(locations, agents);
     std::cout<<"--------------------\n";
@@ -74,13 +62,13 @@ int main(void) {
 
 
     ///////////// SORTs + time measure ////////////////////
-
+/*
     std::cout<<"std PAIR ------------------------------------------\n";
     std::vector<float> times_pair;
     for(int i = 0; i<param::It; i++){
         init_vectors(locations, agents);
         //locationPtrs = calculateLocationsPtrs(locations);
-        float time = sort_by_key_STD_PAIR(agents, locations);
+        float time = sort_STD_PAIR(agents, locations);
         times_pair.push_back(time);
     }
     timesFile<<"times_pair = ";
@@ -92,7 +80,7 @@ int main(void) {
     for(int i = 0; i<param::It; i++){
         init_vectors(locations, agents);
         //locationPtrs = calculateLocationsPtrs(locations);
-        float time = sort_by_key_HELPER_INDICES_VECTOR(agents, locations);
+        float time = sort_HELPER_INDICES_VECTOR(agents, locations);
         times_indices.push_back(time);
     }
     timesFile<<"times_indices = ";
@@ -108,13 +96,13 @@ int main(void) {
     for(int i = 0; i<param::It; i++){
         init_vectors(locations, agents);
         //locationPtrs = calculateLocationsPtrs(locations);
-        float time = sort_by_key_BOOSTTUPLEIT(agents, locations);
+        float time = sort_BOOSTTUPLEIT(agents, locations);
         times_boost.push_back(time);
     }
     timesFile<<"times_boost = ";
     to_file(times_boost, timesFile);
 
-    /*
+    ///*
     std::cout<<"calculateLocationPtrs time measurement ------------------------------\n";
     std::vector<float> times_calcLocationPtrs;
     for(int i = 0; i<param::It; i++){
@@ -129,6 +117,35 @@ int main(void) {
     timesFile<<"calculate_locationPtrs = ";
     to_file(times_calcLocationPtrs, timesFile);
     */
+
+
+
+//////////////////////////// vector<vector>       vs      2 plain vector + locPtrs //////////////////////////////////////////////////////////
+
+   std::cout<<"vector<vector> ------------------------------------------\n";
+    std::vector<float> times_vectorOfVector;
+    for(int i = 0; i<param::It; i++){
+        init_vectors(locations, agents);
+        float time_sort = sort_intoVectorVector(agents, locations, agentsAtLocations);
+        times_vectorOfVector.push_back(time_sort);
+    }
+    timesFile<<"times_vectorOfVector = ";
+    to_file(times_vectorOfVector, timesFile);
+
+    std::cout<<"std PAIR ------------------------------------------\n";
+    std::vector<float> times_pair;
+    for(int i = 0; i<param::It; i++){
+        init_vectors(locations, agents);
+        float time_sort = sort_STD_PAIR(agents, locations);
+        float time_locPtrs = generateKeyPtrs(locations, locationPtrs);
+        times_pair.push_back(time_sort + time_locPtrs);
+    }
+    timesFile<<"times_pair = ";
+    to_file(times_pair, timesFile);
+
+
+
+
 
 
     timesFile.close();

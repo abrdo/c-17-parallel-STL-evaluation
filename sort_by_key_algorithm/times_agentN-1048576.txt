@@ -1,6 +1,4 @@
-times_pair = [ 22, 12, 11, 11, 11]
+times_vectorOfVector = [ 183, 199, 212, 167, 161]
 
-times_indices = [ 36, 40, 35, 37, 31]
-
-times_boost = [ 114, 76, 67, 71, 70]
+times_pair = [ 31, 13, 11, 11, 10]
 
