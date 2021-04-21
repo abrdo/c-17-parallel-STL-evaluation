@@ -1,0 +1,8 @@
+range = [ 1000]
+
+times_sort = [ 2.71266e+06]
+
+times_gen_locPtrs = [ 1.42519e+07]
+
+sum = [ 1.69645e+07]
+
