@@ -1,0 +1,6 @@
+times_sort = [ 2, 0, 0, 0, 0]
+
+times_gen_locPtrs = [ 20, 0, 0, 0, 0]
+
+sum = [ 22, 0, 0, 0, 0]
+

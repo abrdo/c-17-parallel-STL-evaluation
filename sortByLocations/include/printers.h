@@ -3,28 +3,33 @@
 #include <vector>
 #include <sstream>
 
-void PRINT_vector(const std::vector<int>& inputkeys){
-    for(int key : inputkeys){
-        std::cout << key << ",\t";
-    }
-    std::cout<<"\n--------------------\n";
-}
+namespace printer{
 
-template<typename T>
-void to_file(const std::vector<T>& v, std::ofstream &f){
-    f<<"[ ";
-    for(int i = 0; i<v.size(); i++){
-        f<<v[i];
-        if(i != v.size()-1) f<<", ";
+    void PRINT_vector(const std::vector<int>& inputkeys, std::string label = ""){
+        std::cout << label;
+        for(int key : inputkeys){
+            std::cout << key << ",\t";
+        }
+        std::cout<<"\n--------------------\n";
     }
-    f<<"]\n\n";
-}
 
-template<typename T>
-std::string to_str(T i){
-    std::stringstream ss;
-    std::string s;
-    ss<<i;
-    ss>>s;
-    return s;
-}
+    template<typename T>
+    void to_file(const std::vector<T>& v, std::ofstream &f, std::string var_prefix = ""){
+        f << var_prefix << "[ ";
+        for(int i = 0; i<v.size(); i++){
+            f<<v[i];
+            if(i != v.size()-1) f<<", ";
+        }
+        f<<"]\n\n";
+    }
+
+    template<typename T>
+    std::string to_str(T i){
+        std::stringstream ss;
+        std::string s;
+        ss<<i;
+        ss>>s;
+        return s;
+    }
+
+} // namespace

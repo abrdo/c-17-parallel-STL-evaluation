@@ -1,0 +1,6 @@
+times_sort = [ 7, 9, 0, 0, 1]
+
+times_gen_locPtrs = [ 34, 0, 0, 0, 0]
+
+sum = [ 41, 9, 0, 0, 1]
+
