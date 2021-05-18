@@ -29,14 +29,16 @@
 
 int main(void){
     std::ofstream file("times/locChanges/___times_locChHandel_100000.txt");
-    std::vector<int> times_manualUpdate, times_sortAgain;
     LocChangeHandlingApp app;
-    
-    app.run(times_manualUpdate, times_sortAgain);
+    LocChangeHandlingApp::Times times;
+    app.run(times);
     
     //printer::to_file(app.get_range(), file, "range = ");
-    printer::to_file(times_manualUpdate, file, "times_manualUpdate = ");
-    printer::to_file(times_sortAgain, file, "times_sortAgain = ");
+    printer::to_file(times.times_manualUpdate, file, "times_manualUpdate = ");
+    printer::to_file(times.times_sortAgain, file, "times_sortAgain = ");
+    printer::to_file(times.times_refreshLocPtrs, file, "times_refreshLocPtrs = ");
+    printer::to_file(times.times_refreshAgents, file, "times_refreshAgents = ");
+    printer::to_file(times.times_refreshLocations, file, "times_refreshLocations = ");
 
     file.close();
     return 0;

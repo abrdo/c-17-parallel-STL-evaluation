@@ -10,6 +10,9 @@
 #include <cmath>
 
 class SortByLocTesterApp{
+public:
+    std::vector<int> get_range(){ return __range; }
+
 protected:
     std::ofstream timesFile;
     std::vector<int> __range = {10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000, 5000000};
@@ -31,8 +34,6 @@ protected:
         return range;  
     }
 
-public:
-    std::vector<int> get_range(){ return __range; }
 
 
 
