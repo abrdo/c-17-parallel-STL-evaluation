@@ -140,12 +140,12 @@ public:
                 std::vector<int> shiftLeft(__agentN, 0);  // the ith element shows us with how many index do we have to shift the ith agent in the agents array
                 std::vector<int> shiftRight(__agentN, 0); //    -- practically: newAgents[i] = oldAgents[i] - shiftLeft[i] + shiftRight[i]
                 
-                auto t_agents2_begin = std::chrono::high_resolution_clock::now();
-
                 // init oldInds_agents
                 for(int i = 0; i < __agentN; i++){
                     oldInds_agents[i] = std::make_pair(i, agents[i]);
                 }
+
+                auto t_agents2_begin = std::chrono::high_resolution_clock::now();
 
                 // fill movedFrom, movedTo
                 std::for_each(std::execution::par, locChanges.begin(), locChanges.end(), [&agents, &locPtrs, &movedFrom, &movedTo](loc_change_t lch){
