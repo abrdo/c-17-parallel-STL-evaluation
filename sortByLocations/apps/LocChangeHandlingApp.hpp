@@ -134,15 +134,15 @@ public:
 
                 ////// agents V2  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 ///// helper arrays: /////
-                std::vector<std::pair<int,int>> oldInd_agent(__agentN);       // [0, 1, 2, 3 ... __agentN]
+                std::vector<std::pair<int,int>> oldInds_agents(__agentN);       // [0, 1, 2, 3 ... __agentN]
                 std::vector<int> movedFrom(__agentN, 0);  // there will be 1 from where the agent moved away, else 0   - from where we cut out.
                 std::vector<int> movedTo(__agentN, 0);    //    -- there will be 1 to where the agent moved to, else 0       - to where we insert
                 std::vector<int> shiftLeft(__agentN, 0);  // the ith element shows us with how many index do we have to shift the ith agent in the agents array
                 std::vector<int> shiftRight(__agentN, 0); //    -- practically: newAgents[i] = oldAgents[i] - shiftLeft[i] + shiftRight[i]
                 
-                // init oldInd_agent
+                // init oldInds_agents
                 for(int i = 0; i < __agentN; i++){
-                    oldInd_agent[i] = std::make_pair(i, agents[i]);
+                    oldInds_agents[i] = std::make_pair(i, agents[i]);
                 }
 
                 auto t_agents2_begin = std::chrono::high_resolution_clock::now();
@@ -170,7 +170,7 @@ public:
 
 
                 // update agents with new inds
-                std::for_each(std::execution::par, oldInds_agents.begin(), oldInds_agents.end(), [&agents, &shiftLeft, &shiftRight](std::pair<int, int> oldInd_agent){
+                std::for_each(std::execution::par, oldInds_agents.begin(), oldInds_agents.end(), [&movedFrom, &agents, &shiftLeft, &shiftRight](std::pair<int, int> oldInd_agent){
                     // check if invalid
                     if(movedFrom[oldInd_agent.first])
                         return;
