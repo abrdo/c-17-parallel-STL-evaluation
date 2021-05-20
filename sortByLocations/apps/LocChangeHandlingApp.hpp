@@ -189,10 +189,10 @@ public:
                     int newInd = std::distance(agents.begin(), it_newInd);
                     movedFrom[oldInd] = 1;
                    
-
-                    // lock begin   TODO
                     std::pair<int,int> tmp = std::make_pair(oldInd, newInd);
-                    loc_change_t newIndChange = std::make_pair(lch.first, tmp); 
+                    loc_change_t newIndChange = std::make_pair(lch.first, tmp);
+                    
+                    // lock begin   TODO
                     locate(newIndChange);
                     // lock end     TODO
                 });
