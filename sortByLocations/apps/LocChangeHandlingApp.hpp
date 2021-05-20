@@ -19,6 +19,8 @@
 
 #include <iostream>
 #include <vector>
+#include <map>
+#include <iterator>
 #include <random>
 #include <fstream>
 #include <cmath>
@@ -134,6 +136,8 @@ public:
 
                 ////// agents V2  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 ///// helper arrays: /////
+
+                std::map<int, std::pair<int,int>> indChanges;  // [agentID [fromInd, toInd]]  (ind in agents array)
                 std::vector<std::pair<int,int>> oldInds_agents(__agentN);       // [0, 1, 2, 3 ... __agentN]
                 std::vector<int> movedFrom(__agentN, 0);  // there will be 1 from where the agent moved away, else 0   - from where we cut out.
                 std::vector<int> movedTo(__agentN, 0);    //    -- there will be 1 to where the agent moved to, else 0       - to where we insert
@@ -147,18 +151,50 @@ public:
 
                 auto t_agents2_begin = std::chrono::high_resolution_clock::now();
 
+                // HELPER FUNCTION for fill movedFrom, movedTo
+                const std::function<void(loc_change_t&)> locate = [&](loc_change_t &new_ich){
+                    int newInd = new_ich.second.second;
+                    while(movedTo[newInd] == 1){
+                        loc_change_t *ich_ptr = nullptr;
+                        for(loc_change_t ich : indChanges){
+                            if(new_ich.second.second == ich.second.second){
+                                ich_ptr = &ich; // must exist
+                                break;
+                            }
+                        }
+                        //loc_change_t *ich_ptr = indChanges.begin();
+                        if(lch.first < ich_ptr->first){
+                            newInd--;
+                            new_ich.second.second -= 1;
+                            locate(new_ich);
+                        }else{
+                            loc_change_t ich = *ich_ptr;
+                            locate(ich);
+                        }
+                    }                     
+                    indChanges[new_ich.first] = new_ich.second;
+                    movedTo[newInd] = 1;
+                };
                 // fill movedFrom, movedTo
-                std::for_each(std::execution::par, locChanges.begin(), locChanges.end(), [&agents, &locPtrs, &movedFrom, &movedTo](loc_change_t lch){
+                std::for_each(std::execution::par, locChanges.begin(), locChanges.end(), [&agents, &locPtrs, &movedFrom, &movedTo, &indChanges](loc_change_t lch){
                     /*
                     bool check = std::binary_search(agents.begin()+locPtrs[lch.second.first], agents.begin()+locPtrs[lch.second.first+1], lch.first);
                     if(check != true){
                         std::cout<<"false!"; // TODO: debug - talán azért, mert a frissített locptrsben már nincsenek ott a régi from helyeknél az agentek
                     }
                     */
-                    auto it_oldInd      = std::lower_bound(agents.begin()+locPtrs[lch.second.first], agents.begin()+locPtrs[lch.second.first+1], lch.first);
+                    auto it_oldInd = std::lower_bound(agents.begin()+locPtrs[lch.second.first], agents.begin()+locPtrs[lch.second.first+1], lch.first);
                     auto it_newInd = std::lower_bound(agents.begin()+locPtrs[lch.second.second], agents.begin()+locPtrs[lch.second.second+1], lch.first);
-                    movedFrom[it_oldInd - agents.begin()] = 1; // std::distance(agents.begin(), it_oldInd)
-                    movedTo[it_newInd - agents.begin()] = 1;
+                    int oldInd = std::distance(agents.begin(), it_oldInd);
+                    int newInd = std::distance(agents.begin(), it_newInd);
+                    movedFrom[oldInd] = 1;
+                   
+
+                    // lock begin   TODO
+                    std::pair<int,int> tmp = std::make_pair(oldInd, newInd);
+                    loc_change_t newIndChange = std::make_pair(lch.first, tmp); 
+                    locate(newIndChange);
+                    // lock end     TODO
                 });
 
 
@@ -178,8 +214,8 @@ public:
                     agents[newInd] = oldInd_agent.second;
                 });
                 // insert the moving agents to their new locations
-                std::for_each(std::execution::par, locChanges.begin(), locChanges.end(), [&agents](loc_change_t lch){
-                    agents[lch.second.second] = lch.first;
+                std::for_each(std::execution::par, indChanges.begin(), indChanges.end(), [&agents, &indChanges](loc_change_t ich){
+                    agents[ich.second.second] = ich.first;
                 });
 
                 
