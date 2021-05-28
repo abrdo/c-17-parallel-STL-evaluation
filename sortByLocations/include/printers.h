@@ -7,12 +7,12 @@
 
 namespace printer{
 
-    void PRINT_vector(const std::vector<int>& inputkeys, std::string label = ""){
-        std::cout << label;
-        for(int key : inputkeys){
-            std::cout << key << ",\t";
+    void PRINT_vector(const std::vector<int>& vector, std::string label = ""){
+        std::cout << label << '\t';
+        for(int key : vector){
+            std::cout << key << "\t";
         }
-        std::cout<<"\n--------------------\n";
+        std::cout<<"\n--------------------"<<std::endl;
     }
 
     template<typename T>

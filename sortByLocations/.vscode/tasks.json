@@ -1,0 +1,34 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+	  {
+		"type": "shell",
+		"label": "sort_cpu",
+		"command": "icpc",
+		"args": ["${workspaceFolder}/apps/main.cpp", "-std=c++17", "-O3", "-ltbb", "-qopenmp", "-simd", "-xHOST", "-o sort_cpu"],
+	  },
+	  {
+		"type": "shell",
+		"label": "sort_gpu",
+		"command": "icpc",
+		"args": ["${workspaceFolder}/apps/main.cpp", "-std=c++11 -O0 -g -o sort_gpu -stdpar -DGPU"],
+	  },
+	  {
+		"type": "shell",
+		"label": "debug sort_cpu",
+		"command": "icpc",
+		"args": ["${workspaceFolder}/apps/main.cpp", "-std=c++17", "-O0", "-ltbb", "-qopenmp", "-simd", "-xHOST",  "-g", "-o sort_cpu"],
+		"group": {
+		  "kind": "build",
+		  "isDefault": true
+		}
+	  },
+	  {
+		"type": "shell",
+		"label": "debug sort_gpu",
+		"command": "nvc++ -I/home/shared/software/cuda/hpc_sdk/Linux_x86_64/20.9/compilers/include-stdpar",
+		"args": ["${workspaceFolder}/apps/main.cpp", "-std=c++11 -O0 -g -o sort_gpu -stdpar -DGPU"],
+	  }
+
+	]
+  }

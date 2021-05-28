@@ -21,25 +21,31 @@
 // icpc vector_copy.cpp -std=c++11 -ltbb -qopenmp-simd -O3 -xHOST
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+
 #include "sortByLocationsApp.hpp"
 #include "LocChangeHandlingApp.hpp"
 #include "../include/printers.h"
 
 
-
 int main(void){
     std::ofstream file("times/locChanges/___times_locChHandel_100000.txt");
     LocChangeHandlingApp app;
+    
     LocChangeHandlingApp::Times times;
-    app.run(times);
+    
+    times = app.run();
     
     //printer::to_file(app.get_range(), file, "range = ");
-    printer::to_file(times.times_manualUpdate, file, "times_manualUpdate = ");
+    std::vector<int> fullUpdateTime = times.getFullUpdateTime();
+    printer::to_file(fullUpdateTime, file, "times_fullUpdate = ");
     printer::to_file(times.times_sortAgain, file, "times_sortAgain = ");
     printer::to_file(times.times_refreshLocPtrs, file, "times_refreshLocPtrs = ");
     printer::to_file(times.times_refreshAgents, file, "times_refreshAgents = ");
     printer::to_file(times.times_refreshLocations, file, "times_refreshLocations = ");
 
     file.close();
+    
+    std::cout<<"||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||2"<<std::endl;
     return 0;
-}
+}  
