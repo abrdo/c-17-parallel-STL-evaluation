@@ -36,7 +36,7 @@
 int main(void){
     std::cout<<std::boolalpha;
 
-    std::ofstream file("times/locChanges/___times_locChHandel_100000.txt");
+    std::ofstream file("times/locChanges/___times_locChHandel_UPDATE_1000000.txt");
     LocChangeHandlingApp app;
     LocChangeHandlingApp::Times times;
     
@@ -44,11 +44,11 @@ int main(void){
     
     //printer::to_file(app.get_range(), file, "range = ");
     std::vector<int> fullUpdateTime = times.getFullUpdateTime();
-    printer::to_file(fullUpdateTime, file, "times_fullUpdate = ");
-    printer::to_file(times.times_sortAgain, file, "times_sortAgain = ");
     printer::to_file(times.times_refreshLocPtrs, file, "times_refreshLocPtrs = ");
     printer::to_file(times.times_refreshAgents, file, "times_refreshAgents = ");
     printer::to_file(times.times_refreshLocations, file, "times_refreshLocations = ");
+    printer::to_file(fullUpdateTime, file, "\n\ntimes_fullUpdate = ");
+    printer::to_file(times.times_sortAgain, file, "times_sortAgain = ");
 
     file.close();
     return 0;

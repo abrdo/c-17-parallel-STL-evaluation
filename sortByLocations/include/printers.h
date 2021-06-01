@@ -5,6 +5,7 @@
 #include <vector>
 #include <sstream>
 
+
 namespace printer{
 
     void PRINT_vector(const std::vector<int>& vector, std::string label = ""){

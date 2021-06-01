@@ -1,0 +1,17 @@
+agentN = 1 000 000
+locN = 333 333
+locChangeN = 333 333
+
+
+times_refreshLocPtrs = [ 4199]
+
+times_refreshAgents = [ 422]
+
+times_refreshLocations = [ 1833]
+
+
+
+times_fullUpdate = [ 6454]
+
+times_sortAgain = [ 169]
+

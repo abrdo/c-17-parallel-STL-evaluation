@@ -21,6 +21,8 @@
 #include "pairedvectoriterator.h" // implemented by me and Kompi
 #include "tupleit.hh"  // a boost::tuple iterator, implemented by Anthony Williams  - https://pastebin.com/LFkTHdQk  
 
+using time_unit_t2 = std::chrono::milliseconds;
+
 namespace sorting{
 
     float generateKeyPtrs(const std::vector<int>& sortedKeys, std::vector<int>& keyPtrs){ // keyPtrs.size() = keyN
@@ -35,7 +37,7 @@ namespace sorting{
         }
         
         auto t_end = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration_cast<std::chrono::nanoseconds>(t_end-t_begin).count();
+        float time = std::chrono::duration_cast<time_unit_t2>(t_end-t_begin).count();
         return time;
     }   
 
@@ -68,7 +70,7 @@ namespace sorting{
         std::transform(std::execution::par, values_keys.begin(), values_keys.end(), keys.begin(), [](std::pair<int, int> d_k){ return d_k.second; });
         
         auto t_end = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration_cast<std::chrono::nanoseconds>(t_end-t_begin).count();
+        float time = std::chrono::duration_cast<time_unit_t2>(t_end-t_begin).count();
         return time;
     }
         
@@ -105,7 +107,7 @@ namespace sorting{
         std::copy(std::execution::par, sorted_values.begin(), sorted_values.end(), values.begin());
         
         auto t_end = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration_cast<std::chrono::nanoseconds>(t_end-t_begin).count();
+        float time = std::chrono::duration_cast<time_unit_t2>(t_end-t_begin).count();
         return time;
     }
 
@@ -143,7 +145,7 @@ namespace sorting{
         */
         auto t_end = std::chrono::high_resolution_clock::now();
         
-        float time = std::chrono::duration_cast<std::chrono::nanoseconds>(t_end-t_begin).count();
+        float time = std::chrono::duration_cast<time_unit_t2>(t_end-t_begin).count();
         return time;
 
     }
