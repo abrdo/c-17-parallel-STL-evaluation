@@ -65,7 +65,7 @@ public:
     LocChangeHandlingApp(){
         __range = SortByLocTesterApp::genRange();
         __It = 1;                                // number of measurement iteratons for statistics
-        __agentN =  21; //1<<20; //1<<26;     // 2^18 - fast, 2^20 ~= 1 million // number of values   (number of _agents in the COVID simulator)  
+        __agentN =  180000; //1<<20; //1<<26;     // 2^18 - fast, 2^20 ~= 1 million // number of values   (number of _agents in the COVID simulator)  
         __locN = __agentN / 3;               // number of distinct _locations (number of _locations in the COVID simulator)
         _locChangeN = 3; //__agentN / 3;
         
@@ -146,7 +146,11 @@ public:
 
         agents    = {16,      8,       1,       3,       18,      15,      0,       20,      12,      6,       2,       11,      7,       17,      9,       14,      4,       19,      10,      13,      5};
         locations = {0,       0,       1,       1,       1,       1,       2,       3,       3,       3,       3,       4,       4,       4,       5,       5,       5,       5,       6,       6,       6 };
-        int lchs[3][2] = {{17, 0}, {11, 3}, {14, 6}};
+        // int lchs[3][2] = {{17, 0}, {11, 3}, {14, 6}};
+
+        agents =        {5,      15,     2,      3,      7,      8,      12,     13,     4,      0,      11,     9,      17,     16,     10,     14,     6,      1};
+        locations =     {0,      0,      1,      1,      1,      1,      1,      1,      2,      2,      2,      4,      4,      4,      4,      5,      5,      5};
+        int lchs[3][2] = {{0, 1}, {17, 2}, {9, 5}}; // {agentID, toInd}
 
         _locChanges = initLocChanges(lchs); // {agentID, toInd}
 
@@ -156,14 +160,14 @@ public:
         _locations_sbA = locations;
         
 
-         _agents = std::vector<int>(__agentN);
+        _agents = std::vector<int>(__agentN);
         _locations = std::vector<int>(__agentN);
         _locPtrs = std::vector<int>(__locN+1);
         std::copy(std::execution::par, _agents_sbA.begin(), _agents_sbA.end(), _agents.begin());
         std::copy(std::execution::par, _locations_sbA.begin(), _locations_sbA.end(), _locations.begin());
 
         // sort
-        sort_STD_PAIR_fully_unsorted_input(_agents, _locations);
+        sort_STD_PAIR(_agents, _locations);
         generateKeyPtrs(_locations, _locPtrs);
 
         // _agentN, locN, _locChangeN
@@ -204,6 +208,16 @@ public:
                 _agents =       {20,      2,       8,       13,      0,       12,      17,      16,      6,       14,      10,      15,      7,       3,       1,       11,      9,       5,       4,       18,      19};
                 _locations =    {0,       0,       0,       0,       0,       0,       2,       2,       2,       2,       3,       3,       3,       3,       3,       4,       5,       5,       6,       6,       6};
                 */
+                /*
+                _agents_sbA =    {0,      1,      2,      3,      4,      5,      6,      7,      8,      9,      10,     11,     12,     13,     14,     15,     16,     17};
+                _locations_sbA = {2,      5,      1,      1,      2,      0,      5,      1,      1,      4,       4,      2,      1,      1,      5,      0,      4,      4};
+                _locPtrs =       {0,      2,      8,      11,     11,     15,     18};
+                _agents =        {5,      15,     2,      3,      7,      8,      12,     13,     4,      0,      11,     9,      17,     16,     10,     14,     6,      1};
+                _locations =     {0,      0,      1,      1,      1,      1,      1,      1,      2,      2,      2,      4,      4,      4,      4,      5,      5,      5};
+                int lchs[3][2] = {{0, 1}, {17, 2}, {9, 5}}; // {agentID, toInd}
+                _locChanges = initLocChanges(lchs);
+                sort_STD_PAIR(_agents, _locations);
+                */
 
                 std::cout << "\n////////////// ORIGINAL //////////////\n";
                 PRINT_all();
@@ -222,7 +236,6 @@ public:
                 std::vector<int> _locPtrsU = _locPtrs; 
 
                 std::cout << "\n////////////// UPDATED //////////////\n";
-                //PRINT_vector({0, 2, -4, -8, 9, 3, 5, -1, 6, 7}, "exp agents:");
                 PRINT_all();
 
 
@@ -535,6 +548,8 @@ void update_agents_par(){ // V3  ///////////////////////////////////////////////
         std::cout<<"--------------------"<<std::endl;
     }
     void PRINT_all(){
+        PRINT_vector(_agents_sbA, "_agents_sbA");
+        PRINT_vector(_locations_sbA, "_locations_sbA");
         PRINT_vector(_locPtrs,  "_locPtrs :    ");
         PRINT_vector(_agents,   "_agents :     ");
         PRINT_vector(_locations,"_locations :  ");

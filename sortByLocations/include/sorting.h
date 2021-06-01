@@ -45,7 +45,6 @@ namespace sorting{
     //---------------- sorting algorithms with different DATASTRUCTURES ----------------------------
     //  std::pair is the fastest
 
-    // PRECONDITION: let it be sorted by values!
     float sort_STD_PAIR(std::vector<int> &values, std::vector<int> &keys){
         //--- Init ---//
         int N = keys.size();
@@ -58,7 +57,11 @@ namespace sorting{
         std::transform(std::execution::par, values.begin(), values.end(), keys.begin(), values_keys.begin(), [](int key, int values){ std::pair<int,int> tmp = std::make_pair(key, values); return tmp; });
         
         // SORT
-        std::sort(std::execution::par, values_keys.begin(), values_keys.end(), [](std::pair<int,int> a, std::pair<int,int> b){ return a.second < b.second;});
+        std::sort(std::execution::par, values_keys.begin(), values_keys.end(), [](std::pair<int,int> a, std::pair<int,int> b){
+            if (a.second != b.second)
+                return a.second < b.second;
+            return a.first < b.first;    
+        });
         
         // transform back
         std::transform(std::execution::par, values_keys.begin(), values_keys.end(), values.begin(), [](std::pair<int, int> d_k){ return d_k.first; });
@@ -70,6 +73,7 @@ namespace sorting{
     }
         
 
+    // TODO sort by both 1. keys and 2. values
     float sort_HELPER_INDICES_VECTOR(std::vector<int> &values, std::vector<int> &keys){
         //--- Init ---//
         long int N = keys.size();
@@ -106,6 +110,7 @@ namespace sorting{
     }
 
 
+    // TODO sort by both 1. keys and 2. values
     float sort_PAIRED_VECTOR_ITERATOR(std::vector<int> &values, std::vector<int> &keys){
         // todo with my paired vector iterator
         return 0;
@@ -113,6 +118,7 @@ namespace sorting{
 
 
 
+    // TODO sort by both 1. keys and 2. values
     inline float sort_BOOSTTUPLEIT(std::vector<int> &values, std::vector<int> &keys){
 
         // icpc - on CPU - one warning :
@@ -153,33 +159,6 @@ namespace sorting{
                                         iterators::makeTupleIterator(std::end(containers)...));
     }
     */
-
-    float sort_STD_PAIR_fully_unsorted_input(std::vector<int> &values, std::vector<int> &keys){
-        //--- Init ---//
-        int N = keys.size();
-        std::vector<std::pair<int,int>> values_keys(N);
-        
-        //--- Operations - time measuring starts ---//
-        auto t_begin = std::chrono::high_resolution_clock::now();
-        
-        //  TRANSFORM the 2 vector to one std::pair vector -- values_keys
-        std::transform(std::execution::par, values.begin(), values.end(), keys.begin(), values_keys.begin(), [](int key, int values){ std::pair<int,int> tmp = std::make_pair(key, values); return tmp; });
-        
-        // SORT
-        std::sort(std::execution::par, values_keys.begin(), values_keys.end(), [](std::pair<int,int> a, std::pair<int,int> b){
-            if (a.second != b.second)
-                return a.second < b.second;
-            return a.first < b.first;    
-        });
-        
-        // transform back
-        std::transform(std::execution::par, values_keys.begin(), values_keys.end(), values.begin(), [](std::pair<int, int> d_k){ return d_k.first; });
-        std::transform(std::execution::par, values_keys.begin(), values_keys.end(), keys.begin(), [](std::pair<int, int> d_k){ return d_k.second; });
-        
-        auto t_end = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration_cast<std::chrono::nanoseconds>(t_end-t_begin).count();
-        return time;
-    }
 
 } // namespace sort
 

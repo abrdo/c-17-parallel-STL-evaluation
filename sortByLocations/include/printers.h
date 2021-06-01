@@ -10,7 +10,7 @@ namespace printer{
     void PRINT_vector(const std::vector<int>& vector, std::string label = ""){
         std::cout << label << '\t';
         for(int item : vector){
-            std::cout << item << "\t";
+            std::cout << item << ",\t";
         }
         std::cout<<"\n--------------------"<<std::endl;
     }
@@ -18,11 +18,11 @@ namespace printer{
         std::cout << label << '\t';
         if (first_or_second == "first")
             for(std::pair<int,int> item : vector){
-                std::cout << item.first << "\t";
+                std::cout << item.first << ",\t";
             }
         else if (first_or_second == "second")
             for(std::pair<int,int> item : vector){
-                std::cout << item.second << "\t";
+                std::cout << item.second << ",\t";
             }
         else
             std::cout<<"first or second?"<<std::endl;

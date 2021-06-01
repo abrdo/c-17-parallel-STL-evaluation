@@ -21,8 +21,7 @@ protected:
     int __locN =  __agentN / 3;               // number of distinct locations (number of locations in the COVID simulator)
 
     void init_vectors(std::vector<int>& agents, std::vector<int>& locations){
-        for(int i =  0; i<agents.size(); i++)
-            agents[i] = i;
+        std::iota(agents.begin(), agents.end(), 0);
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_int_distribution distrib(0, __locN-1);
