@@ -1,7 +1,10 @@
 ////////////////////////////////     Forditas, futtatas:     /////////////////////////////////////////////////
-// Makefile-al:
+// Makefile parancsok:
 //  make -B sort_cpu
 //  make -B sort_gpu
+//DEBUG:
+//  make -B dsort_cpu
+//  make -B dsort_gpu
 
 
 
@@ -27,11 +30,14 @@
 #include "LocChangeHandlingApp.hpp"
 #include "../include/printers.h"
 
+#include <iomanip>
+
 
 int main(void){
+    std::cout<<std::boolalpha;
+
     std::ofstream file("times/locChanges/___times_locChHandel_100000.txt");
     LocChangeHandlingApp app;
-    
     LocChangeHandlingApp::Times times;
     
     times = app.run();
@@ -45,7 +51,5 @@ int main(void){
     printer::to_file(times.times_refreshLocations, file, "times_refreshLocations = ");
 
     file.close();
-    
-    std::cout<<"||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||2"<<std::endl;
     return 0;
 }  

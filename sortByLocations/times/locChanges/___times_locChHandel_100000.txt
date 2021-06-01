@@ -1,10 +1,10 @@
 times_fullUpdate = [ ]
 
-times_sortAgain = [ 373067]
+times_sortAgain = [ 351997]
 
 times_refreshLocPtrs = [ ]
 
-times_refreshAgents = [ 937375]
+times_refreshAgents = [ 6752974]
 
-times_refreshLocations = [ 5650]
+times_refreshLocations = [ 35277]
 
