@@ -33,7 +33,4 @@ protected:
         return range;  
     }
 
-
-
-
 };

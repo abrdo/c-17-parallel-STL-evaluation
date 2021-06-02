@@ -113,7 +113,7 @@ public:
     }
 
     void sortLocChanges(std::vector<loc_change_t> &locChanges){
-        // update_agents_par ::  movingAgents_toInds  wants it:
+        // update_agents ::  movingAgents_toInds  wants it:
         // 1. toInd  2. agent
         std::sort(std::execution::par, locChanges.begin(), locChanges.end(), [](loc_change_t lch1, loc_change_t lch2){
             if(lch1.second.second != lch2.second.second)
@@ -210,8 +210,8 @@ public:
                 //// std::cout<<"\n";
                 
 
-                update_locations_sbA();
-                update_agents_par();
+                update_locations_sbA(); // is not in full time measure
+                update_agents();
                 update_locPtrs();
                 update_locations();
 
@@ -278,115 +278,7 @@ public:
     }
 
 
-    void update_agents_seq(){ //V1 - MOST CRITICAL //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        auto t_agents_begin = std::chrono::high_resolution_clock::now();
-        std::for_each(std::execution::seq, _locChanges.begin(), _locChanges.end(), [this](loc_change_t lch){
-            auto it_originalAgentInd = std::lower_bound(_agents.begin()+_locPtrs[lch.second.first], _agents.begin()+_locPtrs[lch.second.first+1], lch.first);
-            auto it_newAgentInd = std::lower_bound(_agents.begin()+_locPtrs[lch.second.second], _agents.begin()+_locPtrs[lch.second.second+1], lch.first);
-            if(lch.second.first < lch.second.second)
-                for( auto it_currAgent = it_originalAgentInd; it_currAgent != it_newAgentInd; it_currAgent++)
-                    *it_currAgent = *(it_currAgent+1);
-            else
-                for( auto it_currAgent = it_originalAgentInd; it_currAgent != it_newAgentInd; it_currAgent--)
-                    *it_currAgent = *(it_currAgent-1);
-            *it_newAgentInd = lch.first; 
-        });
-        auto t_agents_end = std::chrono::high_resolution_clock::now();
-
-        int time_refreshAgents = std::chrono::duration_cast<time_unit_t>( t_agents_end - t_agents_begin ).count();
-        _times.times_refreshAgents.push_back(time_refreshAgents);
-    }
-
-    void update_agents_par__simultainly_the_shiftLeft_shiftRigth__wrong(){ // V2  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // helper arrays:
-        std::map<int, std::pair<int,int>> indChanges;  // [agentID [fromInd, toInd]]  (ind in _agents array)       // TODOOOOOOOOOOOOO fill it. 
-        std::vector<std::pair<int,int>> oldInds_agents(__agentN);       // [0, 1, 2, 3 ... __agentN]
-        std::vector<int> movedFrom(__agentN, 0);  // there will be 1 from where the agent moved away, else 0   - from where we cut out.
-        std::vector<int> movedTo(__agentN, 0);    //    -- there will be 1 to where the agent moved to, else 0       - to where we insert
-        std::vector<int> shiftLeft(__agentN, 0);  // the ith element shows us with how many index do we have to shift the ith agent in the _agents array
-        std::vector<int> shiftRight(__agentN, 0); //    -- practically: newAgents[i] = oldAgents[i] - shiftLeft[i] + shiftRight[i]
-        
-        // init oldInds_agents
-        for(int i = 0; i < __agentN; i++){
-            oldInds_agents[i] = std::make_pair(i, _agents[i]);
-        }
-
-        auto t_agents2_begin = std::chrono::high_resolution_clock::now();
-        
-        // fill movedFrom, movedTo
-        std::for_each(std::execution::par, _locChanges.begin(), _locChanges.end(), [this, &movedFrom, &movedTo, &indChanges](loc_change_t lch){
-            // locate function
-            const std::function<void(loc_change_t&)> locate = [&](loc_change_t &new_ich){
-                int newInd = new_ich.second.second;
-                while(movedTo[newInd] == 1){
-                    loc_change_t *ich_ptr = nullptr;
-                    for(loc_change_t ich : indChanges){
-                        if(new_ich.second.second == ich.second.second){
-                            ich_ptr = &ich; // must exist
-                            break;
-                        }
-                    }
-                    if(lch.first < ich_ptr->first){
-                        newInd--;
-                        new_ich.second.second -= 1;
-                        locate(new_ich);
-                    }else{
-                        loc_change_t ich = *ich_ptr;
-                        locate(ich);
-                    }
-                }                     
-                indChanges[new_ich.first] = new_ich.second;
-                movedTo[newInd] = 1;
-            };
-            
-            //bool check = std::binary_search(_agents.begin()+_locPtrs[lch.second.first], _agents.begin()+_locPtrs[lch.second.first+1], lch.first);
-            //if(check != true){
-            //    std::cout<<"false!"; // TODO: debug - talán azért, mert a frissített locptrsben már nincsenek ott a régi from helyeknél az agentek
-            //}
-            auto it_oldInd = std::lower_bound(_agents.begin()+_locPtrs[lch.second.first], _agents.begin()+_locPtrs[lch.second.first+1], lch.first);
-            auto it_newInd = std::lower_bound(_agents.begin()+_locPtrs[lch.second.second], _agents.begin()+_locPtrs[lch.second.second+1], lch.first);
-            int oldInd = std::distance(_agents.begin(), it_oldInd);
-            int newInd = std::distance(_agents.begin(), it_newInd);
-            movedFrom[oldInd] = 1;
-            
-            std::pair<int,int> tmp = std::make_pair(oldInd, newInd);
-            loc_change_t newIndChange = std::make_pair(lch.first, tmp);
-            
-            // lock begin   TODO
-            locate(newIndChange);
-            // lock end     TODO
-        });
-
-
-        // calc shiftLeft array
-        std::exclusive_scan(std::execution::par, movedFrom.begin(), movedFrom.end(), shiftLeft.begin(), 0);
-
-        // calc shiftRight array
-        std::inclusive_scan(std::execution::par, movedTo.begin(), movedTo.end(), shiftRight.begin());
-
-
-        // update _agents with new inds
-        std::vector<int> newInds(oldInds_agents.size());
-        std::for_each(std::execution::par, oldInds_agents.begin(), oldInds_agents.end(), [this, &movedFrom, &shiftLeft, &shiftRight](std::pair<int, int> oldInd_agent){
-            if(movedFrom[oldInd_agent.first])
-                return;
-            int newInd = oldInd_agent.first - shiftLeft[oldInd_agent.first] + shiftRight[oldInd_agent.first];
-            _agents[newInd] = oldInd_agent.second;
-        });
-        // insert the moving _agents to their new _locations
-        std::for_each(std::execution::par, indChanges.begin(), indChanges.end(), [this, &indChanges](loc_change_t ich){
-            _agents[ich.second.second] = ich.first;
-        });
-
-        
-        auto t_agents2_end = std::chrono::high_resolution_clock::now();
-
-        int time_refreshAgents2 = std::chrono::duration_cast<time_unit_t>( t_agents2_end - t_agents2_begin ).count();
-        _times.times_refreshAgents.push_back(time_refreshAgents2);
-    }
-
-
-void update_agents_par(){ // V3  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void update_agents(){ ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // HELPER arrays
         std::vector<std::pair<int,int>> staticAgents_inds(__agentN - _locChangeN);
         std::vector<std::pair<int,int>> movingAgents_fromInds(_locChangeN);
@@ -532,3 +424,115 @@ void update_agents_par(){ // V3  ///////////////////////////////////////////////
 };
 
     
+
+
+/*
+
+    void update_agents_seq(){ //V1 - MOST CRITICAL //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        auto t_agents_begin = std::chrono::high_resolution_clock::now();
+        std::for_each(std::execution::seq, _locChanges.begin(), _locChanges.end(), [this](loc_change_t lch){
+            auto it_originalAgentInd = std::lower_bound(_agents.begin()+_locPtrs[lch.second.first], _agents.begin()+_locPtrs[lch.second.first+1], lch.first);
+            auto it_newAgentInd = std::lower_bound(_agents.begin()+_locPtrs[lch.second.second], _agents.begin()+_locPtrs[lch.second.second+1], lch.first);
+            if(lch.second.first < lch.second.second)
+                for( auto it_currAgent = it_originalAgentInd; it_currAgent != it_newAgentInd; it_currAgent++)
+                    *it_currAgent = *(it_currAgent+1);
+            else
+                for( auto it_currAgent = it_originalAgentInd; it_currAgent != it_newAgentInd; it_currAgent--)
+                    *it_currAgent = *(it_currAgent-1);
+            *it_newAgentInd = lch.first; 
+        });
+        auto t_agents_end = std::chrono::high_resolution_clock::now();
+
+        int time_refreshAgents = std::chrono::duration_cast<time_unit_t>( t_agents_end - t_agents_begin ).count();
+        _times.times_refreshAgents.push_back(time_refreshAgents);
+    }
+
+    void update_agents__simultainly_the_shiftLeft_shiftRigth__wrong(){ // V2  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // helper arrays:
+        std::map<int, std::pair<int,int>> indChanges;  // [agentID [fromInd, toInd]]  (ind in _agents array)       // TODOOOOOOOOOOOOO fill it. 
+        std::vector<std::pair<int,int>> oldInds_agents(__agentN);       // [0, 1, 2, 3 ... __agentN]
+        std::vector<int> movedFrom(__agentN, 0);  // there will be 1 from where the agent moved away, else 0   - from where we cut out.
+        std::vector<int> movedTo(__agentN, 0);    //    -- there will be 1 to where the agent moved to, else 0       - to where we insert
+        std::vector<int> shiftLeft(__agentN, 0);  // the ith element shows us with how many index do we have to shift the ith agent in the _agents array
+        std::vector<int> shiftRight(__agentN, 0); //    -- practically: newAgents[i] = oldAgents[i] - shiftLeft[i] + shiftRight[i]
+        
+        // init oldInds_agents
+        for(int i = 0; i < __agentN; i++){
+            oldInds_agents[i] = std::make_pair(i, _agents[i]);
+        }
+
+        auto t_agents2_begin = std::chrono::high_resolution_clock::now();
+        
+        // fill movedFrom, movedTo
+        std::for_each(std::execution::par, _locChanges.begin(), _locChanges.end(), [this, &movedFrom, &movedTo, &indChanges](loc_change_t lch){
+            // locate function
+            const std::function<void(loc_change_t&)> locate = [&](loc_change_t &new_ich){
+                int newInd = new_ich.second.second;
+                while(movedTo[newInd] == 1){
+                    loc_change_t *ich_ptr = nullptr;
+                    for(loc_change_t ich : indChanges){
+                        if(new_ich.second.second == ich.second.second){
+                            ich_ptr = &ich; // must exist
+                            break;
+                        }
+                    }
+                    if(lch.first < ich_ptr->first){
+                        newInd--;
+                        new_ich.second.second -= 1;
+                        locate(new_ich);
+                    }else{
+                        loc_change_t ich = *ich_ptr;
+                        locate(ich);
+                    }
+                }                     
+                indChanges[new_ich.first] = new_ich.second;
+                movedTo[newInd] = 1;
+            };
+            
+            //bool check = std::binary_search(_agents.begin()+_locPtrs[lch.second.first], _agents.begin()+_locPtrs[lch.second.first+1], lch.first);
+            //if(check != true){
+            //    std::cout<<"false!"; // TODO: debug - talán azért, mert a frissített locptrsben már nincsenek ott a régi from helyeknél az agentek
+            //}
+            auto it_oldInd = std::lower_bound(_agents.begin()+_locPtrs[lch.second.first], _agents.begin()+_locPtrs[lch.second.first+1], lch.first);
+            auto it_newInd = std::lower_bound(_agents.begin()+_locPtrs[lch.second.second], _agents.begin()+_locPtrs[lch.second.second+1], lch.first);
+            int oldInd = std::distance(_agents.begin(), it_oldInd);
+            int newInd = std::distance(_agents.begin(), it_newInd);
+            movedFrom[oldInd] = 1;
+            
+            std::pair<int,int> tmp = std::make_pair(oldInd, newInd);
+            loc_change_t newIndChange = std::make_pair(lch.first, tmp);
+            
+            // lock begin   TODO
+            locate(newIndChange);
+            // lock end     TODO
+        });
+
+
+        // calc shiftLeft array
+        std::exclusive_scan(std::execution::par, movedFrom.begin(), movedFrom.end(), shiftLeft.begin(), 0);
+
+        // calc shiftRight array
+        std::inclusive_scan(std::execution::par, movedTo.begin(), movedTo.end(), shiftRight.begin());
+
+
+        // update _agents with new inds
+        std::vector<int> newInds(oldInds_agents.size());
+        std::for_each(std::execution::par, oldInds_agents.begin(), oldInds_agents.end(), [this, &movedFrom, &shiftLeft, &shiftRight](std::pair<int, int> oldInd_agent){
+            if(movedFrom[oldInd_agent.first])
+                return;
+            int newInd = oldInd_agent.first - shiftLeft[oldInd_agent.first] + shiftRight[oldInd_agent.first];
+            _agents[newInd] = oldInd_agent.second;
+        });
+        // insert the moving _agents to their new _locations
+        std::for_each(std::execution::par, indChanges.begin(), indChanges.end(), [this, &indChanges](loc_change_t ich){
+            _agents[ich.second.second] = ich.first;
+        });
+
+        
+        auto t_agents2_end = std::chrono::high_resolution_clock::now();
+
+        int time_refreshAgents2 = std::chrono::duration_cast<time_unit_t>( t_agents2_end - t_agents2_begin ).count();
+        _times.times_refreshAgents.push_back(time_refreshAgents2);
+    }
+
+*/

@@ -150,7 +150,7 @@ public:
         timesFile<<"times_boost = ";
         to_file(times_boost, timesFile);
 
-        ///*
+        //
         std::cout<<"calculateLocationPtrs time measurement ------------------------------\n";
         std::vector<float> times_calcLocationPtrs;
         for(int i = 0; i<__It; i++){
