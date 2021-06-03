@@ -50,6 +50,7 @@ namespace sorting{
     float sort_STD_PAIR(std::vector<int> &values, std::vector<int> &keys){
         //--- Init ---//
         int N = keys.size();
+        std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
         std::vector<std::pair<int,int>> values_keys(N);
         
         //--- Operations - time measuring starts ---//
@@ -58,17 +59,20 @@ namespace sorting{
         //  TRANSFORM the 2 vector to one std::pair vector -- values_keys
         std::transform(std::execution::par, values.begin(), values.end(), keys.begin(), values_keys.begin(), [](int key, int values){ std::pair<int,int> tmp = std::make_pair(key, values); return tmp; });
         
+        std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
         // SORT
-        std::sort(std::execution::par, values_keys.begin(), values_keys.end(), [](std::pair<int,int> a, std::pair<int,int> b){
+        std::sort(std::execution::par, values_keys.begin(), values_keys.end(), [=](std::pair<int,int> a, std::pair<int,int> b){
             if (a.second != b.second)
                 return a.second < b.second;
             return a.first < b.first;    
         });
+        std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
         
         // transform back
         std::transform(std::execution::par, values_keys.begin(), values_keys.end(), values.begin(), [](std::pair<int, int> d_k){ return d_k.first; });
         std::transform(std::execution::par, values_keys.begin(), values_keys.end(), keys.begin(), [](std::pair<int, int> d_k){ return d_k.second; });
         
+        std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
         auto t_end = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration_cast<time_unit_t2>(t_end-t_begin).count();
         return time;
@@ -82,7 +86,7 @@ namespace sorting{
         std::vector<int> indices(N);
         std::iota(indices.begin(), indices.end(), 0);
         
-        int* key_ptr = &keys[0];   
+        int* key_ptr = &keys[0];  
         
         std::vector<int> sorted_keys(N);
         std::vector<int> sorted_values(N);
@@ -91,7 +95,7 @@ namespace sorting{
         auto t_begin = std::chrono::high_resolution_clock::now();
         
         std::sort(std::execution::par, indices.begin(), indices.end(),
-            [=](const int& a, const int& b){
+            [=](int a, int b){
                 return key_ptr[a] < key_ptr[b];
             }
         );
