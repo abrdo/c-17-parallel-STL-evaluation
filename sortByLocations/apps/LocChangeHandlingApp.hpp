@@ -89,30 +89,44 @@ public:
 
     std::vector<loc_change_t> genLocChanges(std::vector<int> locations_sortedByAgents){
         
-        std::vector<loc_change_t> locChanges;
+        std::cout << "2222222222222222222"<<std::endl;
+
+        std::vector<loc_change_t> locChanges(1);
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_int_distribution<int> distrb_agent(0, __agentN-1);
         std::uniform_int_distribution<int> distrb_loc(0, __locN-1);
         for(int i = 0; i < _locChangeN; i++){
+            std::cout << "-1111111111111111111111111111111"<<std::endl;
             std::pair<int, std::pair<int,int>> tmpLocChange;
-            do
+            do{
                 tmpLocChange.first = distrb_agent(gen);
-            while( std::find_if(std::execution::par, locChanges.begin(), locChanges.end(), [&](loc_change_t lch){ return tmpLocChange.first == lch.first; }) != locChanges.end());
+                bool b = tmpLocChange.first == locChanges[i-1].first;
+                std::cout <<"---00000 -  "<< b <<std::endl;
+            } while( std::find_if(std::execution::par, locChanges.begin(), locChanges.end(), [=](loc_change_t lch){ return tmpLocChange.first == lch.first; }) != locChanges.end());
+            if(tmpLocChange.first >= locations_sortedByAgents.size())
+                std::cout << "000000000000000000000000000000"<<std::endl;
+            std::cout << "--1111111111111111111111111111111"<<std::endl;
             tmpLocChange.second.first = locations_sortedByAgents[tmpLocChange.first];
+            std::cout << "---1111111111111111111111111111111"<<std::endl;
             do
                 tmpLocChange.second.second = distrb_loc(gen);
             while( tmpLocChange.second.second == locations_sortedByAgents[tmpLocChange.first]
-                    || std::find_if(std::execution::par, locChanges.begin(), locChanges.end(), [&](loc_change_t lch){ return tmpLocChange.first == lch.first; }) != locChanges.end());
+                    || std::find_if(std::execution::par, locChanges.begin(), locChanges.end(), [=](loc_change_t lch){ return tmpLocChange.first == lch.first; }) != locChanges.end());
+            std::cout << "1111111111111111111111111111111"<<std::endl;
             locChanges.push_back(tmpLocChange);
+            std::cout << "121212121212121212121212121212"<<std::endl;
         }
+                std::cout << "22222222222222222222"<<std::endl;
 
         sortLocChanges(locChanges);
+        
+                std::cout << "333333333333333333"<<std::endl;
 
         return locChanges;
     }
 
-    void sortLocChanges(std::vector<loc_change_t> &locChanges){
+    void sortLocChanges(std::vector<loc_change_t> locChanges){                                  
         // update_agents ::  movingAgents_toInds  wants it:
         // 1. toInd  2. agent
         std::sort(std::execution::par, locChanges.begin(), locChanges.end(), [](loc_change_t lch1, loc_change_t lch2){
@@ -286,6 +300,7 @@ int calcShift_forInsertion (const int &beginInd, const int &toInd, const std::ve
     return shift;
 };
 void update_agents(){ ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
         // HELPER arrays
         std::vector<std::pair<int,int>> staticAgents_inds(__agentN - _locChangeN);
         std::vector<std::pair<int,int>> movingAgents_fromInds(_locChangeN);
@@ -335,10 +350,10 @@ void update_agents(){ //////////////////////////////////////////////////////////
             std::pair<int,int> newStatAgent_ind;
             newStatAgent_ind.first  = agent_oldInd.first;
             newStatAgent_ind.second = agent_oldInd.second - shiftLeft;
-            staticAgents_inds[newStatAgent_ind.second] = newStatAgent_ind; // TODO ERROR
-            //////std::cout << agent_oldInd.first << std::endl;
-            //////std::cout << agent_oldInd.second - shiftLeft << std::endl;
-            //////std::cout << std::endl;
+            staticAgents_inds[newStatAgent_ind.second] = newStatAgent_ind;
+            ////std::cout << agent_oldInd.first << std::endl;
+            ////std::cout << agent_oldInd.second - shiftLeft << std::endl;
+            ////std::cout << std::endl;
         });
         ////PRINT_vector(staticAgents_inds, "first" , "statAg:      ");
 
@@ -349,7 +364,7 @@ void update_agents(){ //////////////////////////////////////////////////////////
         std::iota(locs.begin(), locs.end(), 0);
         std::vector<int> locPtrs_shifts(__locN + 1, 0);
         std::for_each(std::execution::par, locs.begin(), locs.end(), [this, &locPtrs_shifts](int loc){
-            locPtrs_shifts[loc + 1] = std::count_if(std::execution::par, _locChanges.begin(), _locChanges.end(), [&loc](loc_change_t lch){
+            locPtrs_shifts[loc + 1] = std::count_if(std::execution::seq, _locChanges.begin(), _locChanges.end(), [&loc](loc_change_t lch){
                 return lch.second.first == loc;
             }); 
         });
@@ -358,6 +373,25 @@ void update_agents(){ //////////////////////////////////////////////////////////
             return lPtr - shift;  // shouldn't throw segfault
         });
         ////PRINT_vector(locPtrs_stat, "locPtrs_stat:  ");
+
+        /*
+        // create locPtrs for staticAgents_inds 
+        std::vector<int> locPtrs_stat(__locN + 1);
+        std::vector<int> locPtrs_shiftLefts(__locN + 1, 0);
+        std::vector<int> isMovedFromIthLoc(__locN * _locChangeN, 0); // plain matrix, rows: locations, colummns: in ith locChange  from_loc == ithLoc
+        std::vector<int> mxInds(__locN * _locChangeN);
+        std::iota(mxInds.begin(), mxInds.end(), 0);
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        std::for_each(std::execution::par, mxInds.begin(), mxInds.end(), [this, &isMovedFromIthLoc](int ind){
+            isMovedFromIthLoc[ind] = 0;
+        });
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        std::inclusive_scan(std::execution::par, isMovedFromIthLoc.begin(), isMovedFromIthLoc.end(), locPtrs_shiftLefts.begin());
+        std::transform(std::execution::par, _locPtrs.begin(), _locPtrs.end(), locPtrs_shiftLefts.begin(), locPtrs_stat.begin(), [](int lPtr, int shift){
+            return lPtr - shift;  // shouldn't throw segfault
+        });
+        ////PRINT_vector(locPtrs_stat, "locPtrs_stat:  ");
+        */
 
         // movingAgents_toInds  (not intent)   !!! : locChanges must be sorted by toInds!
         std::for_each(std::execution::par, changeInds.begin(), changeInds.end(), [this, &movingAgents_toInds, &staticAgents_inds, &locPtrs_stat](int i){

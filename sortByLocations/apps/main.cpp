@@ -13,6 +13,7 @@
     salloc -pgpu2 --nodelist=neumann srun --pty --preserve-env /bin/bash -l
     module load gpu/cuda/11.0rc
     module load nvhpc/20.9
+    
     nvc++ -I/home/shared/software/cuda/hpc_sdk/Linux_x86_64/20.9/compilers/include-stdpar         vector_copy_gpu.cpp -std=c++11 -O3 -o gpu_test -stdpar
     ./gpu_test
 
