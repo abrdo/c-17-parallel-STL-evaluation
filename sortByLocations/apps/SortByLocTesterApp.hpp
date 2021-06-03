@@ -24,7 +24,7 @@ protected:
         std::iota(agents.begin(), agents.end(), 0);
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_int_distribution distrib(0, __locN-1);
+        std::uniform_int_distribution<int> distrib(0, __locN-1);
         std::generate(locations.begin(), locations.end(), [&](){ return distrib(gen); });
     }
 

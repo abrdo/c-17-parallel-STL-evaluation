@@ -92,8 +92,8 @@ public:
         std::vector<loc_change_t> locChanges;
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_int_distribution distrb_agent(0, __agentN-1);
-        std::uniform_int_distribution distrb_loc(0, __locN-1);
+        std::uniform_int_distribution<int> distrb_agent(0, __agentN-1);
+        std::uniform_int_distribution<int> distrb_loc(0, __locN-1);
         for(int i = 0; i < _locChangeN; i++){
             std::pair<int, std::pair<int,int>> tmpLocChange;
             do
@@ -277,7 +277,14 @@ public:
         _times.times_refreshLocPtrs.push_back(time_refreshLocPtrs);
     }
 
-
+int calcShift_forInsertion (const int &beginInd, const int &toInd, const std::vector<std::pair<int,int>> &movingAgents_toInds){ // shouldn't throw segfault
+    int shift = std::count_if(movingAgents_toInds.begin(), movingAgents_toInds.end(), [&](std::pair<int,int> agent_ind){
+        return beginInd <= agent_ind.second  && agent_ind.second <= toInd;
+    });
+    if(shift != 0)
+        shift = shift + calcShift_forInsertion(toInd+1, toInd + shift, movingAgents_toInds);
+    return shift;
+};
 void update_agents(){ ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // HELPER arrays
         std::vector<std::pair<int,int>> staticAgents_inds(__agentN - _locChangeN);
@@ -365,16 +372,8 @@ void update_agents(){ //////////////////////////////////////////////////////////
         ////PRINT_vector(movingAgents_toInds, "second", "TO ind:  ");
 
         // (INSERTION) Insert staticAgents into _agents
-        std::function<int(int, int)> calcShift = [&calcShift, &movingAgents_toInds](int beginInd, int toInd){ // shouldn't throw segfault
-            int shift = std::count_if(movingAgents_toInds.begin(), movingAgents_toInds.end(), [&](std::pair<int,int> agent_ind){
-                return beginInd <= agent_ind.second  && agent_ind.second <= toInd;
-            });
-            if(shift != 0)
-                shift = shift + calcShift(toInd+1, toInd + shift);
-            return shift;
-        };
-        std::for_each(std::execution::seq /*TODO*/, staticAgents_inds.begin(), staticAgents_inds.end(), [&](std::pair<int,int> agent_ind){
-            int shiftRigth = calcShift(0, agent_ind.second);
+        std::for_each(std::execution::par, staticAgents_inds.begin(), staticAgents_inds.end(), [&](std::pair<int,int> agent_ind){
+            int shiftRigth = calcShift_forInsertion(0, agent_ind.second, movingAgents_toInds);
             _agents[agent_ind.second + shiftRigth] = agent_ind.first;
         });
 
