@@ -116,6 +116,33 @@ namespace sorting{
     }
 
 
+    float sort_HELPER_INDICES_2(std::vector<int> &values, std::vector<int> &keys){
+        auto t_begin = std::chrono::high_resolution_clock::now();
+
+        std::vector<int> inds(values.size(), -1), newInds(values.size(), -1), sorted_keys(values.size(), -1), sorted_values(values.size(), -1);
+        std::iota(inds.begin(), inds.end(), 0);
+        std::sort(std::execution::par, newInds.begin(), newInds.end(), [=](int i1, int i2){
+            if (keys[i1] != keys[i2])
+                return keys[i1] < keys[i2];
+            return values[i1] < values[i2];  
+        });
+        std::cout<<"ssssssssssssssssssssssssssssss"<<std::endl;
+        std::for_each(std::execution::par, inds.begin(), inds.end(), [&](int i){
+            sorted_keys[newInds[i]]   = keys[i];
+            sorted_values[newInds[i]] = values[i];
+        });
+        std::cout<<"ssssssssssssssssssssssssssssss"<<std::endl;
+
+        // copy
+        std::copy(std::execution::par, sorted_keys.begin(), sorted_keys.end(), keys.begin());
+        std::copy(std::execution::par, sorted_values.begin(), sorted_values.end(), values.begin());
+        
+        auto t_end = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration_cast<time_unit_t2>(t_end-t_begin).count();
+        return time;
+    }
+
+
     // TODO sort by both 1. keys and 2. values
     float sort_PAIRED_VECTOR_ITERATOR(std::vector<int> &values, std::vector<int> &keys){
         // todo with my paired vector iterator

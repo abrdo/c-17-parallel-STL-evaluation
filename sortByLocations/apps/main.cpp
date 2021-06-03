@@ -39,9 +39,11 @@ int main(void){
 
     std::ofstream file("times/locChanges/___times_locChHandel_UPDATE_1000000.txt");
     LocChangeHandlingApp app;
+    //SortByLocationsApp app;
     LocChangeHandlingApp::Times times;
     
     times = app.run();
+    //app.run();
     
     //printer::to_file(app.get_range(), file, "range = ");
     std::vector<int> fullUpdateTime = times.getFullUpdateTime();
