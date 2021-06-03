@@ -118,7 +118,7 @@ namespace sorting{
 
     float sort_HELPER_INDICES_2(std::vector<int> &values, std::vector<int> &keys){
         auto t_begin = std::chrono::high_resolution_clock::now();
-
+/*
         std::vector<int> inds(values.size(), -1), newInds(values.size(), -1), sorted_keys(values.size(), -1), sorted_values(values.size(), -1);
         std::iota(inds.begin(), inds.end(), 0);
         std::sort(std::execution::par, newInds.begin(), newInds.end(), [=](int i1, int i2){
@@ -136,7 +136,7 @@ namespace sorting{
         // copy
         std::copy(std::execution::par, sorted_keys.begin(), sorted_keys.end(), keys.begin());
         std::copy(std::execution::par, sorted_values.begin(), sorted_values.end(), values.begin());
-        
+*/
         auto t_end = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration_cast<time_unit_t2>(t_end-t_begin).count();
         return time;
