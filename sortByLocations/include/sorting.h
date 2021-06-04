@@ -47,6 +47,49 @@ namespace sorting{
     //---------------- sorting algorithms with different DATASTRUCTURES ----------------------------
     //  std::pair is the fastest
 
+
+    struct MyPair{
+        int val;
+        int key;
+        MyPair(){}
+        MyPair(int val_, int key_) : val(val_), key(key_){}
+    };
+
+    float sort_MY_PAIR(std::vector<int> &values, std::vector<int> &keys){
+        //--- Init ---//
+        int N = keys.size();
+        std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
+        std::vector<MyPair> values_keys(N);
+        
+        //--- Operations - time measuring starts ---//
+        auto t_begin = std::chrono::high_resolution_clock::now();
+        
+        //  TRANSFORM the 2 vector to one std::pair vector -- values_keys
+        std::transform(std::execution::par, values.begin(), values.end(), keys.begin(), values_keys.begin(), [](int value, int key){
+            MyPair pair(value, key);
+            return pair;
+        });
+        
+        std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
+        // SORT
+        std::sort(std::execution::par, values_keys.begin(), values_keys.end(), [=](MyPair p1, MyPair p2){
+            if (p1.key == p2.key)
+                return p1.val < p2.val;
+            return p1.key < p2.key;
+        });
+        std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
+        
+        // transform back
+        std::transform(std::execution::par, values_keys.begin(), values_keys.end(), values.begin(), [](MyPair val_key){ return val_key.val; });
+        std::transform(std::execution::par, values_keys.begin(), values_keys.end(), keys.begin(), [](MyPair val_key){ return val_key.key; });
+        
+        std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
+        auto t_end = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration_cast<time_unit_t2>(t_end-t_begin).count();
+        return time;
+    }
+
+
     float sort_STD_PAIR(std::vector<int> &values, std::vector<int> &keys){
         //--- Init ---//
         int N = keys.size();
@@ -57,14 +100,19 @@ namespace sorting{
         auto t_begin = std::chrono::high_resolution_clock::now();
         
         //  TRANSFORM the 2 vector to one std::pair vector -- values_keys
-        std::transform(std::execution::par, values.begin(), values.end(), keys.begin(), values_keys.begin(), [](int key, int values){ std::pair<int,int> tmp = std::make_pair(key, values); return tmp; });
+        std::transform(std::execution::par, values.begin(), values.end(), keys.begin(), values_keys.begin(), [](int value, int key){
+            std::pair<int,int> tmp = std::make_pair(value, key);
+            return tmp;
+        });
         
         std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
+        // this part doesn't run on GPU
         // SORT
-        std::sort(std::execution::par, values_keys.begin(), values_keys.end(), [=](std::pair<int,int> a, std::pair<int,int> b){
-            if (a.second != b.second)
-                return a.second < b.second;
-            return a.first < b.first;    
+
+        std::sort(std::execution::par, values_keys.begin(), values_keys.end(), [=](std::pair<int,int> p1, std::pair<int,int> p2){
+            if (p1.first == p2.first)
+                return p1.second < p2.second;
+            return p1.first < p2.first;    
         });
         std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
         
@@ -115,7 +163,7 @@ namespace sorting{
         return time;
     }
 
-
+    // runs on CPU but on GPU compilation error
     float sort_HELPER_INDICES_2(std::vector<int> &values, std::vector<int> &keys){
         auto t_begin = std::chrono::high_resolution_clock::now();
 /*

@@ -91,7 +91,7 @@ public:
         std::cout<<"/////////////////////////"<<std::endl,
 
         // sort
-        sort_STD_PAIR(_agents, _locations);
+        sort_MY_PAIR(_agents, _locations);
         std::cout<<"/////////////////////////"<<std::endl;
         generateKeyPtrs(_locations, _locPtrs);
         std::cout<<"/////////////////////////"<<std::endl;
@@ -189,7 +189,7 @@ public:
         _locChangeN = 3;
         
         // sorted by agents
-        sort_STD_PAIR(locations, agents); 
+        sort_MY_PAIR(locations, agents); 
         _agents_sbA = agents;
         _locations_sbA = locations;
 
@@ -204,7 +204,7 @@ public:
         std::copy(std::execution::par, _locations_sbA.begin(), _locations_sbA.end(), _locations.begin());
         std::cout<<"1111111111111111111111"<<std::endl;
         // sort
-        sort_STD_PAIR(_agents, _locations);
+        sort_MY_PAIR(_agents, _locations);
         generateKeyPtrs(_locations, _locPtrs);
         std::cout<<"1111111111111111111111"<<std::endl;
 
@@ -257,7 +257,7 @@ public:
                 // ... vs sort again
                 std::copy(std::execution::par, _agents_sbA.begin(), _agents_sbA.end(), _agents.begin());
                 std::copy(std::execution::par, _locations_sbA.begin(), _locations_sbA.end(), _locations.begin());
-                float time_sort = sort_STD_PAIR(_agents, _locations);
+                float time_sort = sort_MY_PAIR(_agents, _locations);
                 float time_gen_locPtrs = generateKeyPtrs(_locations, _locPtrs);
                 int time_sortAgain = time_sort + time_gen_locPtrs;
                 _times.times_sortAgain.push_back(time_sortAgain);
@@ -279,11 +279,12 @@ public:
 
 
     void update_locations_sbA(){
-        std::for_each(std::execution::par, _locChanges.begin(), _locChanges.end(), [&](LocChange lch){
+        std::cout << "//// upd loc_SbA ////////\n";
+        std::for_each(std::execution::par_unseq, _locChanges.begin(), _locChanges.end(), [&](LocChange lch){
             _locations_sbA[lch.agent] = lch.to;
         });
+        std::cout << "//// upd  loc_SbA ////////\n";
     }
-
         
     void update_locPtrs(){ /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         std::vector<int> locInds(__locN);
@@ -378,7 +379,7 @@ public:
         std::iota(locs.begin(), locs.end(), 0);
         std::vector<int> locPtrs_shifts(__locN + 1, 0);
         std::for_each(std::execution::par, locs.begin(), locs.end(), [this, &locPtrs_shifts](int loc){
-            locPtrs_shifts[loc + 1] = std::count_if(std::execution::seq, _locChanges.begin(), _locChanges.end(), [&loc](LocChange lch){
+            locPtrs_shifts[loc + 1] = std::count_if(std::execution::par, _locChanges.begin(), _locChanges.end(), [&loc](LocChange lch){
                 return lch.from == loc;
             }); 
         });
