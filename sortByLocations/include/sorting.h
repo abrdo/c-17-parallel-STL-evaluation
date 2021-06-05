@@ -58,7 +58,6 @@ namespace sorting{
     float sort_MY_PAIR(std::vector<int> &values, std::vector<int> &keys){
         //--- Init ---//
         int N = keys.size();
-        std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
         std::vector<MyPair> values_keys(N);
         
         //--- Operations - time measuring starts ---//
@@ -70,20 +69,17 @@ namespace sorting{
             return pair;
         });
         
-        std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
         // SORT
         std::sort(std::execution::par, values_keys.begin(), values_keys.end(), [=](MyPair p1, MyPair p2){
             if (p1.key == p2.key)
                 return p1.val < p2.val;
             return p1.key < p2.key;
         });
-        std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
         
         // transform back
         std::transform(std::execution::par, values_keys.begin(), values_keys.end(), values.begin(), [](MyPair val_key){ return val_key.val; });
         std::transform(std::execution::par, values_keys.begin(), values_keys.end(), keys.begin(), [](MyPair val_key){ return val_key.key; });
         
-        std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
         auto t_end = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration_cast<time_unit_t2>(t_end-t_begin).count();
         return time;
@@ -93,7 +89,6 @@ namespace sorting{
     float sort_STD_PAIR(std::vector<int> &values, std::vector<int> &keys){
         //--- Init ---//
         int N = keys.size();
-        std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
         std::vector<std::pair<int,int>> values_keys(N);
         
         //--- Operations - time measuring starts ---//
@@ -105,7 +100,6 @@ namespace sorting{
             return tmp;
         });
         
-        std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
         // this part doesn't run on GPU
         // SORT
 
@@ -114,13 +108,11 @@ namespace sorting{
                 return p1.second < p2.second;
             return p1.first < p2.first;    
         });
-        std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
         
         // transform back
         std::transform(std::execution::par, values_keys.begin(), values_keys.end(), values.begin(), [](std::pair<int, int> d_k){ return d_k.first; });
         std::transform(std::execution::par, values_keys.begin(), values_keys.end(), keys.begin(), [](std::pair<int, int> d_k){ return d_k.second; });
         
-        std::cout<<"|||||||||||||||||||||||||||||"<<std::endl;
         auto t_end = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration_cast<time_unit_t2>(t_end-t_begin).count();
         return time;

@@ -36,8 +36,11 @@
 
 int main(void){
     std::cout<<std::boolalpha;
-
-    std::ofstream file("times/locChanges/___times_locChHandel_UPDATE_1000000.txt");
+#ifndef GPU
+    std::ofstream file("times/locChanges/___times_locChHandel_UPDATE_1000000_CPU.txt");
+#else
+    std::ofstream file("times/locChanges/___times_locChHandel_UPDATE_1000000_GPU.txt");
+#endif
     LocChangeHandlingApp app;
     //SortByLocationsApp app;
     LocChangeHandlingApp::Times times;

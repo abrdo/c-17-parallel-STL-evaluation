@@ -96,51 +96,34 @@ public:
         _agents = std::vector<int>(__agentN);
         _locations = std::vector<int>(__agentN);
         _locPtrs = std::vector<int>(__locN+1);
-        std::cout<<"/////////////////////////"<<std::endl;
         std::copy(std::execution::par, _agents_sbA.begin(), _agents_sbA.end(), _agents.begin());
         std::copy(std::execution::par, _locations_sbA.begin(), _locations_sbA.end(), _locations.begin());
-        std::cout<<"/////////////////////////"<<std::endl,
 
         // sort
         sort_MY_PAIR(_agents, _locations);
-        std::cout<<"/////////////////////////"<<std::endl;
         generateKeyPtrs(_locations, _locPtrs);
-        std::cout<<"/////////////////////////"<<std::endl;
     }
 
     std::vector<LocChange> genLocChanges(std::vector<int> locations_sortedByAgents){
-        
-        std::cout << "2222222222222222222"<<std::endl;
-
         std::vector<LocChange> locChanges;
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_int_distribution<int> distrb_agent(0, __agentN-1);
         std::uniform_int_distribution<int> distrb_loc(0, __locN-1);
         for(int i = 0; i < _locChangeN; i++){
-            std::cout << "-1111111111111111111111111111111"<<std::endl;
             LocChange tmpLocChange(0,0,0);
             do{
                 tmpLocChange.agent = distrb_agent(gen);
             } while( std::find_if(std::execution::par, locChanges.begin(), locChanges.end(), [=](LocChange lch){ return tmpLocChange.agent == lch.agent; }) != locChanges.end());
             if(tmpLocChange.agent >= locations_sortedByAgents.size())
-                std::cout << "000000000000000000000000000000"<<std::endl;
-            std::cout << "--1111111111111111111111111111111"<<std::endl;
             tmpLocChange.from = locations_sortedByAgents[tmpLocChange.agent];
-            std::cout << "---1111111111111111111111111111111"<<std::endl;
             do
                 tmpLocChange.to = distrb_loc(gen);
             while( tmpLocChange.to == locations_sortedByAgents[tmpLocChange.agent]
                     || std::find_if(std::execution::par, locChanges.begin(), locChanges.end(), [=](LocChange lch){ return tmpLocChange.agent == lch.agent; }) != locChanges.end());
-            std::cout << "1111111111111111111111111111111"<<std::endl;
             locChanges.push_back(tmpLocChange);
-            std::cout << "121212121212121212121212121212"<<std::endl;
         }
-        std::cout << "22222222222222222222"<<std::endl;
-
         locChanges = sortLocChanges(locChanges);
-        
-        std::cout << "333333333333333333"<<std::endl;
 
         return locChanges;
     }
@@ -214,18 +197,15 @@ public:
 
         // init locChanges
         _locChanges = initLocChanges(lchs); // {agentID, toInd}
-        std::cout<<"1111111111111111111111"<<std::endl;
         // _agents, _locations, _locPtrs
         _agents = std::vector<int>(__agentN);
         _locations = std::vector<int>(__agentN);
         _locPtrs = std::vector<int>(__locN+1);
         std::copy(std::execution::par, _agents_sbA.begin(), _agents_sbA.end(), _agents.begin());
         std::copy(std::execution::par, _locations_sbA.begin(), _locations_sbA.end(), _locations.begin());
-        std::cout<<"1111111111111111111111"<<std::endl;
         // sort
         sort_MY_PAIR(_agents, _locations);
         generateKeyPtrs(_locations, _locPtrs);
-        std::cout<<"1111111111111111111111"<<std::endl;
 
         
     }
@@ -320,13 +300,13 @@ public:
         std::for_each(std::execution::seq, _locChanges.begin(), _locChanges.end(), [=](LocChange lch){
             _locations_sbA[lch.agent] = lch.to;
         });
-        std::cout << "//// upd  loc_SbA ////////\n";
+        std::cout << "//// upd loc_SbA END ////////\n";
     }
     
         
     void update_locPtrs(){ /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        auto t_locPtrs_begin = std::chrono::high_resolution_clock::now();
         std::cout << "//// upd locPtrs ////////\n";
+        auto t_locPtrs_begin = std::chrono::high_resolution_clock::now();
         std::for_each(std::execution::seq, _locInds.begin(), _locInds.end(), [&](int i){
             _locPtrs[i] -= std::count_if(std::execution::seq, _locChanges.begin(), _locChanges.end(), [&](LocChange lch){
                 return lch.from < i;
@@ -335,11 +315,11 @@ public:
                 return lch.to < i;
             });
         });
-        std::cout << "//// upd locPtrs ////////\n";
         auto t_locPtrs_end = std::chrono::high_resolution_clock::now();
 
         int time_refreshLocPtrs = std::chrono::duration_cast<time_unit_t>( t_locPtrs_end - t_locPtrs_begin ).count();
         _times.times_refreshLocPtrs.push_back(time_refreshLocPtrs);
+        std::cout << "//// upd locPtrs END ////////\n";
     }
 
     int calcShift_forInsertion (const int &beginInd, const int &toInd, const std::vector<std::pair<int,int>> &movingAgents_toInds){ // shouldn't throw segfault
@@ -351,6 +331,7 @@ public:
         return shift;
     };
     void update_agents(){ ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        std::cout << "//// upd agents ////////\n";
 
         // HELPER arrays
         std::vector<std::pair<int,int>> staticAgents_inds(__agentN - _locChangeN);
@@ -362,18 +343,15 @@ public:
         std::vector<int> locPtrs_stat(__locN + 1);
         std::vector<int> locPtrs_shifts(__locN + 1, 0);
 
-        std::cout << "//// upd agents ////////\n";
         ////////////// for DEBUG purpuse ////////////////
         std::fill(staticAgents_inds.begin(), staticAgents_inds.end(), std::make_pair<int,int>(-1,-1));
         std::fill(movingAgents_fromInds.begin(), movingAgents_fromInds.end(), std::make_pair<int,int>(-1,-1));
         std::fill(movingAgents_toInds.begin(), movingAgents_toInds.end(), std::make_pair<int,int>(-1,-1));
 
-        std::cout << "//// upd agents ////////\n";
         // ----------------------- START time measuring -------------------------------------
         auto t_agents2_begin = std::chrono::high_resolution_clock::now();
 
         // init movingAgents_fromInds, movingAgents
-        std::cout << "//// upd agents ////////\n";
         std::for_each(std::execution::seq /*TODO*/, _changeInds.begin(), _changeInds.end(), [this, &movingAgents_fromInds, &movingAgents](int i){
             auto ptr = std::lower_bound(_agents.begin() + _locPtrs[_locChanges[i].from], _agents.begin() + _locPtrs[_locChanges[i].from + 1], _locChanges[i].agent);  // must exist accurately
             
@@ -385,8 +363,8 @@ public:
             movingAgents_fromInds[i] = std::make_pair(_locChanges[i].agent, fromInd);
             movingAgents[i] = _locChanges[i].agent;
         });
-        PRINT_vector(movingAgents_fromInds, "first", "Moving agents:    ");
-        PRINT_vector(movingAgents_fromInds, "second", "mvAgs_fromInds:  ");
+        ////PRINT_vector(movingAgents_fromInds, "first", "Moving agents:    ");
+        ////PRINT_vector(movingAgents_fromInds, "second", "mvAgs_fromInds:  ");
         
         // TODO: ? is it needed indead? (isnt enough to go throw by indexes in parallel loops?)
         // init agents_oldInds
@@ -410,7 +388,7 @@ public:
             ////std::cout << "newInd : " << agent_oldInd.second - shiftLeft << std::endl;
             ////std::cout << std::endl;
         });
-        PRINT_vector(staticAgents_inds, "first" , "statAg:      ");
+        ////PRINT_vector(staticAgents_inds, "first" , "statAg:      ");
 
 
         // create locPtrs for staticAgents_inds 
@@ -419,13 +397,11 @@ public:
                 return lch.from == loc;
             }); 
         });
-        std::cout << "//// upd agents ////////\n";
         std::inclusive_scan(std::execution::par, locPtrs_shifts.begin(), locPtrs_shifts.end(), locPtrs_shifts.begin());
-        std::cout << "//// upd agents ////////\n";
         std::transform(std::execution::par, _locPtrs.begin(), _locPtrs.end(), locPtrs_shifts.begin(), locPtrs_stat.begin(), [](int lPtr, int shift){
             return lPtr - shift;  // shouldn't throw segfault
         });
-        PRINT_vector(locPtrs_stat, "locPtrs_stat:  ");
+        ////PRINT_vector(locPtrs_stat, "locPtrs_stat:  ");
 
         /* trying to write it without nested loop
         // create locPtrs for staticAgents_inds 
@@ -455,8 +431,8 @@ public:
             movingAgents_toInds[i] = std::make_pair(_locChanges[i].agent, toInd + i);   // locChanges is sorted by 1. toLocation 2. agnetID   =>   movingAgents_toInds is sorted by 1. inds 2. agents
                                                                                         // +i is because of the "self shift"
         });     
-        PRINT_vector(movingAgents_toInds, "first",  "mvAg:         ");
-        PRINT_vector(movingAgents_toInds, "second", "TO ind:  ");
+        ////PRINT_vector(movingAgents_toInds, "first",  "mvAg:         ");
+        ////PRINT_vector(movingAgents_toInds, "second", "TO ind:  ");
 
         // (INSERTION) Insert staticAgents into _agents
         std::for_each(std::execution::seq, staticAgents_inds.begin(), staticAgents_inds.end(), [&](std::pair<int,int> agent_ind){
@@ -473,6 +449,7 @@ public:
 
         int time_refreshAgents2 = std::chrono::duration_cast<time_unit_t>( t_agents2_end - t_agents2_begin ).count();
         _times.times_refreshAgents.push_back(time_refreshAgents2);
+        std::cout << "//// upd agents END ////////\n";
     }
 
         
@@ -482,11 +459,11 @@ public:
         std::for_each(std::execution::seq, _locInds.begin(), _locInds.end(), [this](int i){
             std::fill(std::execution::par, _locations.begin()+_locPtrs[i], _locations.begin()+_locPtrs[i+1], i);  
         }); 
-        std::cout << "//// upd locs ////////\n";
         auto t_locations_end = std::chrono::high_resolution_clock::now();
 
         int time_refreshLocations = std::chrono::duration_cast<time_unit_t>( t_locations_end - t_locations_begin ).count();
         _times.times_refreshLocations.push_back(time_refreshLocations);
+        std::cout << "//// upd locs END ////////\n";
     }
 
 

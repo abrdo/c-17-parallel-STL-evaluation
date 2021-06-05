@@ -2,11 +2,11 @@ times_refreshLocPtrs = [ 0]
 
 times_refreshAgents = [ 0]
 
-times_refreshLocations = [ 1]
+times_refreshLocations = [ 0]
 
 
 
-times_fullUpdate = [ 1]
+times_fullUpdate = [ 0]
 
 times_sortAgain = [ 0]
 
