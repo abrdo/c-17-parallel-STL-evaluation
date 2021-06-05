@@ -238,7 +238,10 @@ public:
                 std::cout<<"\n";
                 
 
-                update_locations_sbA(); // is not in full time measure
+                // update_locations_sbA(); // is not in full time measure
+
+                _locations_sbA = {0, 1, 2, 1, 0, 2, 0, 1, 1, 2};
+
                 update_agents();
                 update_locPtrs();
                 update_locations();
@@ -280,25 +283,47 @@ public:
 
     void update_locations_sbA(){
         std::cout << "//// upd loc_SbA ////////\n";
+        int LOC_locations_sbA[10];
+        std::copy(std::execution::par, _locations_sbA.begin(), _locations_sbA.end(), LOC_locations_sbA);
+
+        // GPU: a for_each az std::vector-t nem szereti   --nvlink error:  undefined reference to 'memmove' in '/tmp/nvc++cO_cbg2vfjf5Y.o'
         std::for_each(std::execution::par_unseq, _locChanges.begin(), _locChanges.end(), [&](LocChange lch){
+            LOC_locations_sbA[lch.agent] = lch.to;
+        });
+
+
+        std::cout << "//// upd  loc_SbA ////////\n";
+        
+        int* end = &(LOC_locations_sbA[10]);
+        std::copy(std::execution::par, LOC_locations_sbA, &(LOC_locations_sbA[10]), _locations_sbA.begin());
+        std::cout << "//// upd  loc_SbA ////////\n";
+    }
+    
+    /*
+    void update_locations_sbA(){
+        std::cout << "//// upd loc_SbA ////////\n";
+        std::for_each(std::execution::par_unseq, _locChanges.begin(), _locChanges.end(), [=](LocChange lch){
             _locations_sbA[lch.agent] = lch.to;
         });
         std::cout << "//// upd  loc_SbA ////////\n";
     }
+    */
         
     void update_locPtrs(){ /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         std::vector<int> locInds(__locN);
         std::iota(locInds.begin(), locInds.end(), 0);
 
         auto t_locPtrs_begin = std::chrono::high_resolution_clock::now();
-        std::for_each(locInds.begin(), locInds.end(), [&](int i){
-            _locPtrs[i] -= std::count_if(std::execution::par, _locChanges.begin(), _locChanges.end(), [&](LocChange lch){
+        std::cout << "//// upd locPtrs ////////\n";
+        std::for_each(std::execution::seq, locInds.begin(), locInds.end(), [&](int i){
+            _locPtrs[i] -= std::count_if(std::execution::seq, _locChanges.begin(), _locChanges.end(), [&](LocChange lch){
                 return lch.from < i;
             });
-            _locPtrs[i] += std::count_if(std::execution::par, _locChanges.begin(), _locChanges.end(), [&](LocChange lch){
+            _locPtrs[i] += std::count_if(std::execution::seq, _locChanges.begin(), _locChanges.end(), [&](LocChange lch){
                 return lch.to < i;
             });
         });
+        std::cout << "//// upd locPtrs ////////\n";
         auto t_locPtrs_end = std::chrono::high_resolution_clock::now();
 
         int time_refreshLocPtrs = std::chrono::duration_cast<time_unit_t>( t_locPtrs_end - t_locPtrs_begin ).count();
@@ -320,12 +345,13 @@ public:
         std::vector<std::pair<int,int>> movingAgents_fromInds(_locChangeN);
         std::vector<std::pair<int,int>> movingAgents_toInds(_locChangeN);
 
-
+        std::cout << "//// upd agents ////////\n";
         ////////////// for DEBUG purpuse ////////////////
         std::fill(staticAgents_inds.begin(), staticAgents_inds.end(), std::make_pair<int,int>(-1,-1));
         std::fill(movingAgents_fromInds.begin(), movingAgents_fromInds.end(), std::make_pair<int,int>(-1,-1));
         std::fill(movingAgents_toInds.begin(), movingAgents_toInds.end(), std::make_pair<int,int>(-1,-1));
 
+        std::cout << "//// upd agents ////////\n";
         // ----------------------- START time measuring -------------------------------------
         auto t_agents2_begin = std::chrono::high_resolution_clock::now();
 
@@ -333,7 +359,8 @@ public:
         std::vector<int> movingAgents(_locChangeN);
         std::vector<int> changeInds(_locChangeN);
         std::iota(changeInds.begin(), changeInds.end(), 0);
-        std::for_each(std::execution::par, changeInds.begin(), changeInds.end(), [this, &movingAgents_fromInds, &movingAgents](int i){
+        std::cout << "//// upd agents ////////\n";
+        std::for_each(std::execution::seq /*TODO*/, changeInds.begin(), changeInds.end(), [this, &movingAgents_fromInds, &movingAgents](int i){
             auto ptr = std::lower_bound(_agents.begin() + _locPtrs[_locChanges[i].from], _agents.begin() + _locPtrs[_locChanges[i].from + 1], _locChanges[i].agent);  // must exist accurately
             
             ////std::for_each(_agents.begin() + _locPtrs[_locChanges[i].from], _agents.begin() + _locPtrs[_locChanges[i].from + 1], [](int i){ std::cout << i << " ";});
@@ -358,7 +385,7 @@ public:
         std::for_each(std::execution::seq /*TODO*/, agents_oldInds.begin(), agents_oldInds.end(), [this, &movingAgents, &movingAgents_fromInds, &staticAgents_inds](std::pair<int,int> agent_oldInd){
             if(std::binary_search(movingAgents.begin(), movingAgents.end(), agent_oldInd.first))
                 return;
-            int shiftLeft = std::count_if(movingAgents_fromInds.begin(), movingAgents_fromInds.end(), [&](std::pair<int, int> mvAgent_fromInd){
+            int shiftLeft = std::count_if(std::execution::seq, movingAgents_fromInds.begin(), movingAgents_fromInds.end(), [&](std::pair<int, int> mvAgent_fromInd){
                 return mvAgent_fromInd.second < agent_oldInd.second; // shouldnt be equal because than it is filterd out above
             });
             std::pair<int,int> newStatAgent_ind;
@@ -378,12 +405,14 @@ public:
         std::vector<int> locs(__locN);
         std::iota(locs.begin(), locs.end(), 0);
         std::vector<int> locPtrs_shifts(__locN + 1, 0);
-        std::for_each(std::execution::par, locs.begin(), locs.end(), [this, &locPtrs_shifts](int loc){
-            locPtrs_shifts[loc + 1] = std::count_if(std::execution::par, _locChanges.begin(), _locChanges.end(), [&loc](LocChange lch){
+        std::for_each(std::execution::seq, locs.begin(), locs.end(), [this, &locPtrs_shifts](int loc){
+            locPtrs_shifts[loc + 1] = std::count_if(std::execution::seq, _locChanges.begin(), _locChanges.end(), [&loc](LocChange lch){
                 return lch.from == loc;
             }); 
         });
+        std::cout << "//// upd agents ////////\n";
         std::inclusive_scan(std::execution::par, locPtrs_shifts.begin(), locPtrs_shifts.end(), locPtrs_shifts.begin());
+        std::cout << "//// upd agents ////////\n";
         std::transform(std::execution::par, _locPtrs.begin(), _locPtrs.end(), locPtrs_shifts.begin(), locPtrs_stat.begin(), [](int lPtr, int shift){
             return lPtr - shift;  // shouldn't throw segfault
         });
@@ -409,7 +438,7 @@ public:
         */
 
         // movingAgents_toInds  (not intent)   !!! : locChanges must be sorted by toInds!
-        std::for_each(std::execution::par, changeInds.begin(), changeInds.end(), [this, &movingAgents_toInds, &staticAgents_inds, &locPtrs_stat](int i){
+        std::for_each(std::execution::seq, changeInds.begin(), changeInds.end(), [this, &movingAgents_toInds, &staticAgents_inds, &locPtrs_stat](int i){
             auto ptr = std::lower_bound(staticAgents_inds.begin() + locPtrs_stat[_locChanges[i].to], staticAgents_inds.begin() + locPtrs_stat[_locChanges[i].to + 1], _locChanges[i].agent, [&](std::pair<int,int> agent_ind, int agent){
                 return agent_ind.first < agent;
             });  // shouldn't exist accuratelly
@@ -421,13 +450,13 @@ public:
         PRINT_vector(movingAgents_toInds, "second", "TO ind:  ");
 
         // (INSERTION) Insert staticAgents into _agents
-        std::for_each(std::execution::par, staticAgents_inds.begin(), staticAgents_inds.end(), [&](std::pair<int,int> agent_ind){
+        std::for_each(std::execution::seq, staticAgents_inds.begin(), staticAgents_inds.end(), [&](std::pair<int,int> agent_ind){
             int shiftRigth = calcShift_forInsertion(0, agent_ind.second, movingAgents_toInds);
             _agents[agent_ind.second + shiftRigth] = agent_ind.first;
         });
 
         // Insert movingAgents into _agents
-        std::for_each(std::execution::par, movingAgents_toInds.begin(), movingAgents_toInds.end(), [&](std::pair<int,int> agent_ind){
+        std::for_each(std::execution::seq, movingAgents_toInds.begin(), movingAgents_toInds.end(), [&](std::pair<int,int> agent_ind){
             _agents[agent_ind.second] = agent_ind.first;
         });
 
@@ -442,10 +471,12 @@ public:
         std::vector<int> locInds(__locN);
         std::iota(locInds.begin(), locInds.end(), 0);
         
+        std::cout << "//// upd locs ////////\n";
         auto t_locations_begin = std::chrono::high_resolution_clock::now();
-        std::for_each(locInds.begin(), locInds.end(), [this](int i){
+        std::for_each(std::execution::seq, locInds.begin(), locInds.end(), [this](int i){
             std::fill(std::execution::par, _locations.begin()+_locPtrs[i], _locations.begin()+_locPtrs[i+1], i);  
         }); 
+        std::cout << "//// upd locs ////////\n";
         auto t_locations_end = std::chrono::high_resolution_clock::now();
 
         int time_refreshLocations = std::chrono::duration_cast<time_unit_t>( t_locations_end - t_locations_begin ).count();
