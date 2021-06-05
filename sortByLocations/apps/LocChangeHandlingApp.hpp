@@ -63,6 +63,10 @@ private:
     std::vector<int> _locations;
     std::vector<int> _locPtrs; 
 
+    std::vector<int> _locInds;
+    std::vector<int> _agentInds;
+    std::vector<int> _changeInds;
+
     Times _times;
 
     // helper vectors: 
@@ -75,6 +79,13 @@ public:
         __agentN =  1000000;  //1<<20; //1<<26;     // 2^18 - fast, 2^20 ~= 1 million // number of values   (number of _agents in the COVID simulator)  
         __locN = __agentN / 3;               // number of distinct _locations (number of _locations in the COVID simulator)
         _locChangeN = 3; //__agentN / 3;
+
+        _locInds = std::vector<int>(__locN);
+        std::iota(_locInds.begin(), _locInds.end(), 0);
+        _agentInds = std::vector<int>(__agentN);
+        std::iota(_agentInds.begin(), _agentInds.end(), 0);
+        _changeInds = std::vector<int>(_locChangeN);
+        std::iota(_changeInds.begin(), _changeInds.end(), 0);
         
         _agents_sbA = std::vector<int>(__agentN); // sbA = sorted by _agents
         _locations_sbA = std::vector<int>(__agentN);
@@ -187,6 +198,14 @@ public:
         __locN = unique_Count.size();
         __locN = 3;
         _locChangeN = 3;
+
+        // locInds, agentInds
+        _locInds = std::vector<int>(__locN);
+        std::iota(_locInds.begin(), _locInds.end(), 0);
+        _agentInds = std::vector<int>(__agentN);
+        std::iota(_agentInds.begin(), _agentInds.end(), 0);
+        _changeInds = std::vector<int>(_locChangeN);
+        std::iota(_changeInds.begin(), _changeInds.end(), 0);
         
         // sorted by agents
         sort_MY_PAIR(locations, agents); 
@@ -238,10 +257,7 @@ public:
                 std::cout<<"\n";
                 
 
-                // update_locations_sbA(); // is not in full time measure
-
-                _locations_sbA = {0, 1, 2, 1, 0, 2, 0, 1, 1, 2};
-
+                update_locations_sbA(); // it is not in full time measure
                 update_agents();
                 update_locPtrs();
                 update_locations();
@@ -280,7 +296,7 @@ public:
         return _times;
     }
 
-
+/*   //  trying to write with array - problem: how to copy the whole array to the GPU?
     void update_locations_sbA(){
         std::cout << "//// upd loc_SbA ////////\n";
         int LOC_locations_sbA[10];
@@ -290,32 +306,28 @@ public:
         std::for_each(std::execution::par_unseq, _locChanges.begin(), _locChanges.end(), [&](LocChange lch){
             LOC_locations_sbA[lch.agent] = lch.to;
         });
-
-
         std::cout << "//// upd  loc_SbA ////////\n";
         
         int* end = &(LOC_locations_sbA[10]);
         std::copy(std::execution::par, LOC_locations_sbA, &(LOC_locations_sbA[10]), _locations_sbA.begin());
         std::cout << "//// upd  loc_SbA ////////\n";
     }
+*/
     
-    /*
     void update_locations_sbA(){
         std::cout << "//// upd loc_SbA ////////\n";
-        std::for_each(std::execution::par_unseq, _locChanges.begin(), _locChanges.end(), [=](LocChange lch){
+        // GPUn: a for_each és a count_if par-ban az std::vector-t nem szereti   --nvlink error:  undefined reference to 'memmove' in '/tmp/nvc++cO_cbg2vfjf5Y.o'
+        std::for_each(std::execution::seq, _locChanges.begin(), _locChanges.end(), [=](LocChange lch){
             _locations_sbA[lch.agent] = lch.to;
         });
         std::cout << "//// upd  loc_SbA ////////\n";
     }
-    */
+    
         
     void update_locPtrs(){ /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        std::vector<int> locInds(__locN);
-        std::iota(locInds.begin(), locInds.end(), 0);
-
         auto t_locPtrs_begin = std::chrono::high_resolution_clock::now();
         std::cout << "//// upd locPtrs ////////\n";
-        std::for_each(std::execution::seq, locInds.begin(), locInds.end(), [&](int i){
+        std::for_each(std::execution::seq, _locInds.begin(), _locInds.end(), [&](int i){
             _locPtrs[i] -= std::count_if(std::execution::seq, _locChanges.begin(), _locChanges.end(), [&](LocChange lch){
                 return lch.from < i;
             });
@@ -345,6 +357,11 @@ public:
         std::vector<std::pair<int,int>> movingAgents_fromInds(_locChangeN);
         std::vector<std::pair<int,int>> movingAgents_toInds(_locChangeN);
 
+        std::vector<int> movingAgents(_locChangeN);
+        std::vector<std::pair<int,int>> agents_oldInds(__agentN);
+        std::vector<int> locPtrs_stat(__locN + 1);
+        std::vector<int> locPtrs_shifts(__locN + 1, 0);
+
         std::cout << "//// upd agents ////////\n";
         ////////////// for DEBUG purpuse ////////////////
         std::fill(staticAgents_inds.begin(), staticAgents_inds.end(), std::make_pair<int,int>(-1,-1));
@@ -356,11 +373,8 @@ public:
         auto t_agents2_begin = std::chrono::high_resolution_clock::now();
 
         // init movingAgents_fromInds, movingAgents
-        std::vector<int> movingAgents(_locChangeN);
-        std::vector<int> changeInds(_locChangeN);
-        std::iota(changeInds.begin(), changeInds.end(), 0);
         std::cout << "//// upd agents ////////\n";
-        std::for_each(std::execution::seq /*TODO*/, changeInds.begin(), changeInds.end(), [this, &movingAgents_fromInds, &movingAgents](int i){
+        std::for_each(std::execution::seq /*TODO*/, _changeInds.begin(), _changeInds.end(), [this, &movingAgents_fromInds, &movingAgents](int i){
             auto ptr = std::lower_bound(_agents.begin() + _locPtrs[_locChanges[i].from], _agents.begin() + _locPtrs[_locChanges[i].from + 1], _locChanges[i].agent);  // must exist accurately
             
             ////std::for_each(_agents.begin() + _locPtrs[_locChanges[i].from], _agents.begin() + _locPtrs[_locChanges[i].from + 1], [](int i){ std::cout << i << " ";});
@@ -376,10 +390,9 @@ public:
         
         // TODO: ? is it needed indead? (isnt enough to go throw by indexes in parallel loops?)
         // init agents_oldInds
-        std::vector<std::pair<int,int>> agents_oldInds(__agentN);
-        for(int i = 0; i < __agentN; i++){
+        std::for_each(std::execution::seq, _agentInds.begin(), _agentInds.end(), [&](int i){
             agents_oldInds[i] = std::make_pair(_agents[i], i);
-        }
+        });
 
         // (DELETION) staticAgents_inds = agents_oldInds - "moving Agents"  
         std::for_each(std::execution::seq /*TODO*/, agents_oldInds.begin(), agents_oldInds.end(), [this, &movingAgents, &movingAgents_fromInds, &staticAgents_inds](std::pair<int,int> agent_oldInd){
@@ -401,11 +414,7 @@ public:
 
 
         // create locPtrs for staticAgents_inds 
-        std::vector<int> locPtrs_stat(__locN + 1);
-        std::vector<int> locs(__locN);
-        std::iota(locs.begin(), locs.end(), 0);
-        std::vector<int> locPtrs_shifts(__locN + 1, 0);
-        std::for_each(std::execution::seq, locs.begin(), locs.end(), [this, &locPtrs_shifts](int loc){
+        std::for_each(std::execution::seq, _locInds.begin(), _locInds.end(), [this, &locPtrs_shifts](int loc){
             locPtrs_shifts[loc + 1] = std::count_if(std::execution::seq, _locChanges.begin(), _locChanges.end(), [&loc](LocChange lch){
                 return lch.from == loc;
             }); 
@@ -438,7 +447,7 @@ public:
         */
 
         // movingAgents_toInds  (not intent)   !!! : locChanges must be sorted by toInds!
-        std::for_each(std::execution::seq, changeInds.begin(), changeInds.end(), [this, &movingAgents_toInds, &staticAgents_inds, &locPtrs_stat](int i){
+        std::for_each(std::execution::seq, _changeInds.begin(), _changeInds.end(), [this, &movingAgents_toInds, &staticAgents_inds, &locPtrs_stat](int i){
             auto ptr = std::lower_bound(staticAgents_inds.begin() + locPtrs_stat[_locChanges[i].to], staticAgents_inds.begin() + locPtrs_stat[_locChanges[i].to + 1], _locChanges[i].agent, [&](std::pair<int,int> agent_ind, int agent){
                 return agent_ind.first < agent;
             });  // shouldn't exist accuratelly
@@ -468,12 +477,9 @@ public:
 
         
     void update_locations(){ /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        std::vector<int> locInds(__locN);
-        std::iota(locInds.begin(), locInds.end(), 0);
-        
         std::cout << "//// upd locs ////////\n";
         auto t_locations_begin = std::chrono::high_resolution_clock::now();
-        std::for_each(std::execution::seq, locInds.begin(), locInds.end(), [this](int i){
+        std::for_each(std::execution::seq, _locInds.begin(), _locInds.end(), [this](int i){
             std::fill(std::execution::par, _locations.begin()+_locPtrs[i], _locations.begin()+_locPtrs[i+1], i);  
         }); 
         std::cout << "//// upd locs ////////\n";
