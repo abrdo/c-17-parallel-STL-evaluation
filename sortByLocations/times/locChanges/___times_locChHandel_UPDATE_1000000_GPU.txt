@@ -1,0 +1,12 @@
+times_refreshLocPtrs = [ 1]
+
+times_refreshAgents = [ 24]
+
+times_refreshLocations = [ 2134]
+
+
+
+times_fullUpdate = [ 2159]
+
+times_sortAgain = [ 23]
+

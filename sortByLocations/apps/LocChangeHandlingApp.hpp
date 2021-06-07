@@ -38,6 +38,7 @@ public:
         int to;   // to location ID
         LocChange() : agent(-1), from(-1), to(-1){}
         LocChange(int agent_, int from_, int to_) : agent(agent_), from(from_), to(to_){}
+        void PRINT(){ std::cout << agent << "\t[ " << from << "\t" << to << " ]\n"; }
     };
     struct Times{
         std::vector<int> times_sortAgain;
@@ -69,16 +70,13 @@ private:
 
     Times _times;
 
-    // helper vectors: 
-    //  TODO   (maybe rather in separate classes (hmm maybe NOT))
-
 public:
-    LocChangeHandlingApp(){
+    LocChangeHandlingApp(int agentN){
         __range = SortByLocTesterApp::genRange();
         __It = 1;                                // number of measurement iteratons for statistics
-        __agentN =  1000000;  //1<<20; //1<<26;     // 2^18 - fast, 2^20 ~= 1 million // number of values   (number of _agents in the COVID simulator)  
+        __agentN =  agentN;  //1<<20; //1<<26;     // 2^18 - fast, 2^20 ~= 1 million // number of values   (number of _agents in the COVID simulator)  
         __locN = __agentN / 3;               // number of distinct _locations (number of _locations in the COVID simulator)
-        _locChangeN = 3; //__agentN / 3;
+        _locChangeN = __agentN / 3; //__agentN / 3;
 
         _locInds = std::vector<int>(__locN);
         std::iota(_locInds.begin(), _locInds.end(), 0);
@@ -112,19 +110,21 @@ public:
         std::uniform_int_distribution<int> distrb_loc(0, __locN-1);
         for(int i = 0; i < _locChangeN; i++){
             LocChange tmpLocChange(0,0,0);
+            // gen agent
             do{
                 tmpLocChange.agent = distrb_agent(gen);
             } while( std::find_if(std::execution::par, locChanges.begin(), locChanges.end(), [=](LocChange lch){ return tmpLocChange.agent == lch.agent; }) != locChanges.end());
-            if(tmpLocChange.agent >= locations_sortedByAgents.size())
+            // fill from
             tmpLocChange.from = locations_sortedByAgents[tmpLocChange.agent];
+            // gen to
             do
                 tmpLocChange.to = distrb_loc(gen);
             while( tmpLocChange.to == locations_sortedByAgents[tmpLocChange.agent]
                     || std::find_if(std::execution::par, locChanges.begin(), locChanges.end(), [=](LocChange lch){ return tmpLocChange.agent == lch.agent; }) != locChanges.end());
+            
             locChanges.push_back(tmpLocChange);
         }
         locChanges = sortLocChanges(locChanges);
-
         return locChanges;
     }
 
@@ -150,16 +150,16 @@ public:
         
         agents    = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         locations = {0, 0, 0, 1, 0, 2, 0, 1, 1, 0};
-        int lchs[3][2] = {{9, 2}, {2, 2}, {1, 1}};
-/*
+        //int lchs[3][2] = {{0, 2}, {2, 2}, {1, 1}};
+
         agents    = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        locations = {2, 2, 0, 1, 2, 0, 2, 2, 1, 0};
-        //int lchs[3][2] = {{7, 0}, {6, 1}, {8, 2}};  soution was: --> first update locPtrs
+        locations = {2, 2, 0, 1, 2, 0, 2, 2, 1, 2};
+        //int lchs[3][2] = {{7, 0}, {6, 1}, {9, 1}};  // így hogy az utolsót mozgatjuk, hibat dob -- invalid write of size 4  --  386. sor
 
         agents    = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         locations = {1, 2, 2, 2, 0, 1, 1, 0, 0, 0};
-        //int lchs[3][2] = {{3, 1}, {9, 1}, {0, 2}};  --> just good again
-
+        int lchs[3][2] = {{3, 1}, {9, 1}, {0, 2}};
+/*
         // unsorted input definitions from here
         agents    = {13,      4,       9,       6,       1,       15,      17,      19,      8,       5,       11,      12,      0,       14,      2,       18,      20,      16,      7,       3,       10};
         locations = {0,       0,       0,       0,       1,       1,       2,       2,       3,       3,       3,       3,       3,       3,       4,       5,       5,       5,       5,       5,       6 };
@@ -230,11 +230,11 @@ public:
         for(int aN : {10}){
             for(int k = 0; k < __It; k++){
 
-                initTestCase(); // else default: rand gen test
+                ////initTestCase(); // else default: rand gen test
 
                 std::cout << "\n////////////// INITIALIZED //////////////\n";
-                PRINT_all();
-                std::cout<<"\n";
+                ////PRINT_all();
+                ////std::cout<<"\n";
                 
 
                 update_locations_sbA(); // it is not in full time measure
@@ -250,7 +250,7 @@ public:
                 std::vector<int> _locPtrsU = _locPtrs; 
 
                 std::cout << "\n////////////// UPDATED //////////////\n";
-                PRINT_all();
+                ////PRINT_all();
 
 
                 // ... vs sort again
@@ -261,7 +261,7 @@ public:
                 int time_sortAgain = time_sort + time_gen_locPtrs;
                 _times.times_sortAgain.push_back(time_sortAgain);
                 std::cout << "\n////////////// SORTED ///////////////\n";
-                PRINT_all();
+                ////PRINT_all();
 
                 // validate UPDATE METHOD
                 bool eq_agents    = _agentsU == _agents;
@@ -276,7 +276,7 @@ public:
         return _times;
     }
 
-/*   //  trying to write with array - problem: how to copy the whole array to the GPU?
+/*   //  trying to write with primitive array - problem: how to copy the whole array to the GPU?
     void update_locations_sbA(){
         std::cout << "//// upd loc_SbA ////////\n";
         int LOC_locations_sbA[10];
@@ -297,7 +297,7 @@ public:
     void update_locations_sbA(){
         std::cout << "//// upd loc_SbA ////////\n";
         // GPUn: a for_each és a count_if par-ban az std::vector-t nem szereti   --nvlink error:  undefined reference to 'memmove' in '/tmp/nvc++cO_cbg2vfjf5Y.o'
-        std::for_each(std::execution::seq, _locChanges.begin(), _locChanges.end(), [=](LocChange lch){
+        std::for_each(std::execution::par, _locChanges.begin(), _locChanges.end(), [=](LocChange lch){
             _locations_sbA[lch.agent] = lch.to;
         });
         std::cout << "//// upd loc_SbA END ////////\n";
@@ -307,11 +307,11 @@ public:
     void update_locPtrs(){ /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         std::cout << "//// upd locPtrs ////////\n";
         auto t_locPtrs_begin = std::chrono::high_resolution_clock::now();
-        std::for_each(std::execution::seq, _locInds.begin(), _locInds.end(), [&](int i){
-            _locPtrs[i] -= std::count_if(std::execution::seq, _locChanges.begin(), _locChanges.end(), [&](LocChange lch){
+        std::for_each(std::execution::par, _locInds.begin(), _locInds.end(), [&](int i){
+            _locPtrs[i] -= std::count_if(std::execution::par, _locChanges.begin(), _locChanges.end(), [&](LocChange lch){
                 return lch.from < i;
             });
-            _locPtrs[i] += std::count_if(std::execution::seq, _locChanges.begin(), _locChanges.end(), [&](LocChange lch){
+            _locPtrs[i] += std::count_if(std::execution::par, _locChanges.begin(), _locChanges.end(), [&](LocChange lch){
                 return lch.to < i;
             });
         });
@@ -352,7 +352,7 @@ public:
         auto t_agents2_begin = std::chrono::high_resolution_clock::now();
 
         // init movingAgents_fromInds, movingAgents
-        std::for_each(std::execution::seq /*TODO*/, _changeInds.begin(), _changeInds.end(), [this, &movingAgents_fromInds, &movingAgents](int i){
+        std::for_each(std::execution::seq /*TODO - it is working just in seq for any reason on CPU as well.*/, _changeInds.begin(), _changeInds.end(), [this, &movingAgents_fromInds, &movingAgents](int i){
             auto ptr = std::lower_bound(_agents.begin() + _locPtrs[_locChanges[i].from], _agents.begin() + _locPtrs[_locChanges[i].from + 1], _locChanges[i].agent);  // must exist accurately
             
             ////std::for_each(_agents.begin() + _locPtrs[_locChanges[i].from], _agents.begin() + _locPtrs[_locChanges[i].from + 1], [](int i){ std::cout << i << " ";});
@@ -368,15 +368,15 @@ public:
         
         // TODO: ? is it needed indead? (isnt enough to go throw by indexes in parallel loops?)
         // init agents_oldInds
-        std::for_each(std::execution::seq, _agentInds.begin(), _agentInds.end(), [&](int i){
+        std::for_each(std::execution::par, _agentInds.begin(), _agentInds.end(), [&](int i){
             agents_oldInds[i] = std::make_pair(_agents[i], i);
         });
 
         // (DELETION) staticAgents_inds = agents_oldInds - "moving Agents"  
-        std::for_each(std::execution::seq /*TODO*/, agents_oldInds.begin(), agents_oldInds.end(), [this, &movingAgents, &movingAgents_fromInds, &staticAgents_inds](std::pair<int,int> agent_oldInd){
+        std::for_each(std::execution::seq /*TODO - it is working just in seq for any reason on CPU as well.*/, agents_oldInds.begin(), agents_oldInds.end(), [this, &movingAgents, &movingAgents_fromInds, &staticAgents_inds](std::pair<int,int> agent_oldInd){
             if(std::binary_search(movingAgents.begin(), movingAgents.end(), agent_oldInd.first))
                 return;
-            int shiftLeft = std::count_if(std::execution::seq, movingAgents_fromInds.begin(), movingAgents_fromInds.end(), [&](std::pair<int, int> mvAgent_fromInd){
+            int shiftLeft = std::count_if(std::execution::par, movingAgents_fromInds.begin(), movingAgents_fromInds.end(), [&](std::pair<int, int> mvAgent_fromInd){
                 return mvAgent_fromInd.second < agent_oldInd.second; // shouldnt be equal because than it is filterd out above
             });
             std::pair<int,int> newStatAgent_ind;
@@ -391,9 +391,9 @@ public:
         ////PRINT_vector(staticAgents_inds, "first" , "statAg:      ");
 
 
-        // create locPtrs for staticAgents_inds 
-        std::for_each(std::execution::seq, _locInds.begin(), _locInds.end(), [this, &locPtrs_shifts](int loc){
-            locPtrs_shifts[loc + 1] = std::count_if(std::execution::seq, _locChanges.begin(), _locChanges.end(), [&loc](LocChange lch){
+        // create locPtrs for staticAgents_inds    // TODO GPU: one of the nested loops to seq
+        std::for_each(std::execution::par, _locInds.begin(), _locInds.end(), [this, &locPtrs_shifts](int loc){
+            locPtrs_shifts[loc + 1] = std::count_if(std::execution::par, _locChanges.begin(), _locChanges.end(), [&loc](LocChange lch){
                 return lch.from == loc;
             }); 
         });
@@ -423,7 +423,7 @@ public:
         */
 
         // movingAgents_toInds  (not intent)   !!! : locChanges must be sorted by toInds!
-        std::for_each(std::execution::seq, _changeInds.begin(), _changeInds.end(), [this, &movingAgents_toInds, &staticAgents_inds, &locPtrs_stat](int i){
+        std::for_each(std::execution::par, _changeInds.begin(), _changeInds.end(), [this, &movingAgents_toInds, &staticAgents_inds, &locPtrs_stat](int i){
             auto ptr = std::lower_bound(staticAgents_inds.begin() + locPtrs_stat[_locChanges[i].to], staticAgents_inds.begin() + locPtrs_stat[_locChanges[i].to + 1], _locChanges[i].agent, [&](std::pair<int,int> agent_ind, int agent){
                 return agent_ind.first < agent;
             });  // shouldn't exist accuratelly
@@ -435,13 +435,13 @@ public:
         ////PRINT_vector(movingAgents_toInds, "second", "TO ind:  ");
 
         // (INSERTION) Insert staticAgents into _agents
-        std::for_each(std::execution::seq, staticAgents_inds.begin(), staticAgents_inds.end(), [&](std::pair<int,int> agent_ind){
+        std::for_each(std::execution::par, staticAgents_inds.begin(), staticAgents_inds.end(), [&](std::pair<int,int> agent_ind){
             int shiftRigth = calcShift_forInsertion(0, agent_ind.second, movingAgents_toInds);
             _agents[agent_ind.second + shiftRigth] = agent_ind.first;
         });
 
         // Insert movingAgents into _agents
-        std::for_each(std::execution::seq, movingAgents_toInds.begin(), movingAgents_toInds.end(), [&](std::pair<int,int> agent_ind){
+        std::for_each(std::execution::par, movingAgents_toInds.begin(), movingAgents_toInds.end(), [&](std::pair<int,int> agent_ind){
             _agents[agent_ind.second] = agent_ind.first;
         });
 
@@ -456,7 +456,7 @@ public:
     void update_locations(){ /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         std::cout << "//// upd locs ////////\n";
         auto t_locations_begin = std::chrono::high_resolution_clock::now();
-        std::for_each(std::execution::seq, _locInds.begin(), _locInds.end(), [this](int i){
+        std::for_each(std::execution::par, _locInds.begin(), _locInds.end(), [this](int i){
             std::fill(std::execution::par, _locations.begin()+_locPtrs[i], _locations.begin()+_locPtrs[i+1], i);  
         }); 
         auto t_locations_end = std::chrono::high_resolution_clock::now();
@@ -470,7 +470,7 @@ public:
     void PRINT_locChanges(){
         std::cout<<"locChanges: \n";
         for(LocChange lch : _locChanges){
-            std::cout << lch.agent << "\t[ " << lch.from << "\t" << lch.to << " ]\n";
+            lch.PRINT();
         }
         std::cout<<"--------------------"<<std::endl;
     }
@@ -492,7 +492,7 @@ public:
 
     void update_agents_seq(){ //V1 - MOST CRITICAL //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         auto t_agents_begin = std::chrono::high_resolution_clock::now();
-        std::for_each(std::execution::seq, _locChanges.begin(), _locChanges.end(), [this](LocChange lch){
+        std::for_each(std::execution::par, _locChanges.begin(), _locChanges.end(), [this](LocChange lch){
             auto it_originalAgentInd = std::lower_bound(_agents.begin()+_locPtrs[lch.from], _agents.begin()+_locPtrs[lch.from+1], lch.agent);
             auto it_newAgentInd = std::lower_bound(_agents.begin()+_locPtrs[lch.to], _agents.begin()+_locPtrs[lch.to+1], lch.agent);
             if(lch.from < lch.to)

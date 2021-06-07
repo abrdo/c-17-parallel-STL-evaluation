@@ -41,7 +41,7 @@ int main(void){
 #else
     std::ofstream file("times/locChanges/___times_locChHandel_UPDATE_1000000_GPU.txt");
 #endif
-    LocChangeHandlingApp app;
+    LocChangeHandlingApp app(10000);
     //SortByLocationsApp app;
     LocChangeHandlingApp::Times times;
     
